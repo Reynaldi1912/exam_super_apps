@@ -19,6 +19,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        //
+        $url = 'http://localhost:3000'; 
+        config(['app.url' => $url]);    
     }
 }

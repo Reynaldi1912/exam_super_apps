@@ -6,9 +6,9 @@
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">
+                        <div id="grouping" class="text-xs font-weight-bold text-primary text-uppercase mb-1">
                             Grouping User</div>
-                        <div class="h5 mb-0 font-weight-bold text-gray-800">10 Group</div>
+                        <div class="h5 mb-0 font-weight-bold text-gray-800">Expired</div>
                     </div>
                     <div class="col-auto">
                     </div>
@@ -27,7 +27,7 @@
                         </div>
                         <div class="row no-gutters align-items-center">
                             <div class="col-auto">
-                                <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">2 / 10</div>
+                                <div id="limit_exam" class="h5 mb-0 mr-3 font-weight-bold text-gray-800">Expired</div>
                             </div>
                             <div class="col">
                                 <div class="progress progress-sm mr-2">
@@ -51,11 +51,11 @@
             <div class="card-body">
                 <div class="row no-gutters align-items-center">
                     <div class="col mr-2">
-                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total User <a href="#" class="text-danger text-bold">( 3 Deactive )</a>
+                        <div class="text-xs font-weight-bold text-primary text-uppercase mb-1">Total User <a href="#" class="text-danger text-bold">( - Deactive )</a>
                         </div>
                         <div class="row no-gutters align-items-center">
                             <div class="col-auto">
-                                <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">135 / 1000</div>
+                                <div id="limit_user" class="h5 mb-0 mr-3 font-weight-bold text-gray-800">Expired</div>
                             </div>
                             <div class="col">
                                 <div class="progress progress-sm mr-2">
@@ -84,7 +84,7 @@
                     </div>
                     <div class="row no-gutters align-items-center">
                         <div class="col-auto">
-                            <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800">11 / 120 days</div>
+                            <div class="h5 mb-0 mr-3 font-weight-bold text-gray-800" id="expired_account">Expired</div>
                         </div>
                         <div class="col">
                             <div class="progress progress-sm mr-2">
@@ -107,7 +107,7 @@
 <!-- Content Row -->
 <div class="row">
     <!-- Content Column -->
-    <div class="col-lg-12 mb-4">
+    <div class="col-lg-12 mb-4"  id="dashboardCard" style="display: none;">
 
         <!-- Project Card Example -->
         <div class="card shadow mb-4">
@@ -145,6 +145,18 @@
             </div>
         </div>
     </div>
+    
+    <div class="col-lg-12 mb-4"  id="dashboardReminder" style="display: none;">
+
+        <!-- Project Card Example -->
+        <div class="card shadow mb-4">
+            <div class="card-header py-3">
+                <h5><b>STATUS AKUN ANDA : </b></h5>
+                <p class="text-danger">Limit akun anda telah habis, silahkan hubungi admin untuk melakukan perpanjangan ke <a href="https://wa.me/6285745785615">085745785615</a></p>
+            </div>
+        </div>
+    </div>
+
 
 
     <div class="modal fade" id="updateTokenModal" tabindex="-1" role="dialog" aria-labelledby="updateTokenModalLabel" aria-hidden="true">
@@ -169,27 +181,67 @@
         </div>
     </div>
     <script>
-          // Exam start and end time
-    const examStartTime = new Date('2024-12-20T07:00:00');
-    const examEndTime = new Date('2024-12-20T08:00:00');
-    const currentTime = new Date();
+            console.log("test");
 
-    const examStatusSpan = document.getElementById('examStatus');
-    const examStatusLabel = document.getElementById('examStatusLabel');
+            // Exam start and end time
+            const examStartTime = new Date('2024-12-20T07:00:00');
+            const examEndTime = new Date('2024-12-20T08:00:00');
+            const currentTime = new Date();
 
-    // Update the status based on current time
-    if (currentTime < examStartTime) {
-        examStatusSpan.classList.remove('text-warning', 'text-success');
-        examStatusSpan.classList.add('text-danger');
-        examStatusLabel.innerHTML = 'Not started yet';
-    } else if (currentTime >= examStartTime && currentTime <= examEndTime) {
-        examStatusSpan.classList.remove('text-danger', 'text-success');
-        examStatusSpan.classList.add('text-warning');
-        examStatusLabel.innerHTML = 'Running now';
-    } else {
-        examStatusSpan.classList.remove('text-danger', 'text-warning');
-        examStatusSpan.classList.add('text-success');
-        examStatusLabel.innerHTML = 'Done';
-    }
+            const examStatusSpan = document.getElementById('examStatus');
+            const examStatusLabel = document.getElementById('examStatusLabel');
+
+            // Update the status based on current time
+            if (currentTime < examStartTime) {
+                examStatusSpan.classList.remove('text-warning', 'text-success');
+                examStatusSpan.classList.add('text-danger');
+                examStatusLabel.innerHTML = 'Not started yet';
+            } else if (currentTime >= examStartTime && currentTime <= examEndTime) {
+                examStatusSpan.classList.remove('text-danger', 'text-success');
+                examStatusSpan.classList.add('text-warning');
+                examStatusLabel.innerHTML = 'Running now';
+            } else {
+                examStatusSpan.classList.remove('text-danger', 'text-warning');
+                examStatusSpan.classList.add('text-success');
+                examStatusLabel.innerHTML = 'Done';
+            }
+
+            $(document).ready(function() {
+                $.ajax({
+                    url: '{{ config('app.url') }}/get-dashboard',
+                    type: 'GET',
+                    headers: {
+                        Authorization: "Bearer " + '{{Session::get('token')}}',
+                        UserId: {{Session::get('id')}}
+                    },
+                    success: function(response) {
+                        if (response.success) {
+                            $('.text-primary.text-uppercase.mb-1').eq(0).text('Grouping User');
+                            $('.text-gray-800').eq(0).text(0 + ' Group');
+
+                            $('.text-primary.text-uppercase.mb-1').eq(1).text('Limit Exam');
+                            $('#limit_exam').text(response.data.limit_exam);
+
+                            $('.text-primary.text-uppercase.mb-1').eq(2).text('Total User (3 Deactive)');
+                            $('#limit_user').text(response.data.limit_user);
+
+                            $('.text-danger.text-uppercase.mb-1').text('Expired Account');
+                            var expiredAt = new Date(response.data.expired_at);
+                            $('#expired_account').text(expiredAt.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }));
+
+                            $('#dashboardCard').show(); // Hide the card if success is false
+                            $('#dashboardReminder').hide(); // Hide the card if success is false
+
+                        } else {
+                            // Hide the entire card if success is false
+                            $('#dashboardCard').hide();
+                            $('#dashboardReminder').show();
+                        }
+                    },
+                    error: function(xhr, status, error) {
+                        console.error('Error:', error);
+                    }
+                });
+            });
     </script>
 @endsection
