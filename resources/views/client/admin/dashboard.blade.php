@@ -180,7 +180,11 @@
             </div>
         </div>
     </div>
+<<<<<<< HEAD
     <script>
+=======
+    <script>           
+>>>>>>> 590e4d52a103bc590bc92d01e592cade77244af1
             $(document).ready(function() {
                 $.ajax({
                     url: '{{ config('app.url') }}/get-dashboard',
@@ -189,7 +193,7 @@
                         Authorization: "Bearer " + '{{Session::get('token_user')}}',
                         UserId: {{Session::get('user_id')}}
                     },
-                    success: function(response) {
+                    success: function(response) {                        
                         if (response.success) {
                             $('.text-primary.text-uppercase.mb-1').eq(0).text('Grouping User');
                             $('.text-gray-800').eq(0).text(0 + ' Group');
@@ -206,6 +210,27 @@
 
                             $('#dashboardCard').show(); // Hide the card if success is false
                             $('#dashboardReminder').hide(); // Hide the card if success is false
+
+                            const examStartTime = new Date('2024-12-20T07:00:00');
+                            const examEndTime = new Date('2024-12-20T08:00:00');
+                            const currentTime = new Date();
+
+                            const examStatusSpan = document.getElementById('examStatus');
+                            const examStatusLabel = document.getElementById('examStatusLabel');
+
+                            if (currentTime < examStartTime) {
+                                examStatusSpan.classList.remove('text-warning', 'text-success');
+                                examStatusSpan.classList.add('text-danger');
+                                examStatusLabel.innerHTML = 'Not started yet';
+                            } else if (currentTime >= examStartTime && currentTime <= examEndTime) {
+                                examStatusSpan.classList.remove('text-danger', 'text-success');
+                                examStatusSpan.classList.add('text-warning');
+                                examStatusLabel.innerHTML = 'Running now';
+                            } else {
+                                examStatusSpan.classList.remove('text-danger', 'text-warning');
+                                examStatusSpan.classList.add('text-success');
+                                examStatusLabel.innerHTML = 'Done';
+                            }
 
                         } else {
                             // Hide the entire card if success is false
