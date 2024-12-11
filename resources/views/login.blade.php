@@ -89,13 +89,13 @@
             success: function(response) {
               console.log('Response dari server:', response);
               if (response.success) {
-                const data = response.data[0];
-				window.location.href = `/create-session/${username}/${data.id}/${data.token_app}`;
-			} else {
-                toastMessage.textContent = "Gagal login! Silakan cek kembali username dan password.";
-                toastElement.classList.remove('text-bg-primary');
-                toastElement.classList.add('bg-danger');
-                toast.show();
+                  const data = response.data[0];
+                  window.location.href = `/create-session/${username}/${data.id}/${data.token_app}`;
+              } else {
+                  toastMessage.textContent = "Gagal login! Silakan cek kembali username dan password.";
+                  toastElement.classList.remove('text-bg-primary');
+                  toastElement.classList.add('bg-danger');
+                  toast.show();
               }
             },
             error: function(xhr, status, error) {

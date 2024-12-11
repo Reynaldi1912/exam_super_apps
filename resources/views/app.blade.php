@@ -89,6 +89,16 @@
         </div>
     </div>
 
+    <div class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+      <div id="toastError" class="toast align-items-center border-0" role="alert" aria-live="assertive" aria-atomic="true" data-bs-delay="5000">
+        <div class="d-flex">
+          <div id="toastMessage" class="toast-body text-white">
+            Gagal login! Silakan cek kembali username dan password.
+          </div>
+        </div>
+      </div>
+    </div>
+
     <!-- Bootstrap core JavaScript-->
     <!-- <script src="../sb-admin/vendor/jquery/jquery.min.js"></script> -->
     <script src="../sb-admin/vendor/bootstrap/js/bootstrap.bundle.min.js"></script>

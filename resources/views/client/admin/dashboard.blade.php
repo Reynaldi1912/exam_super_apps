@@ -174,45 +174,20 @@
                             <label for="newToken">Token</label>
                             <input type="text" class="form-control" id="newToken" placeholder="Enter new token">
                         </div>
-                        <button type="submit" class="btn btn-primary">Update Token</button>
+                        <button type="submit" class="btn btn-primary" onclick="updateToken()">Update Token</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
     <script>
-            console.log("test");
-
-            // Exam start and end time
-            const examStartTime = new Date('2024-12-20T07:00:00');
-            const examEndTime = new Date('2024-12-20T08:00:00');
-            const currentTime = new Date();
-
-            const examStatusSpan = document.getElementById('examStatus');
-            const examStatusLabel = document.getElementById('examStatusLabel');
-
-            // Update the status based on current time
-            if (currentTime < examStartTime) {
-                examStatusSpan.classList.remove('text-warning', 'text-success');
-                examStatusSpan.classList.add('text-danger');
-                examStatusLabel.innerHTML = 'Not started yet';
-            } else if (currentTime >= examStartTime && currentTime <= examEndTime) {
-                examStatusSpan.classList.remove('text-danger', 'text-success');
-                examStatusSpan.classList.add('text-warning');
-                examStatusLabel.innerHTML = 'Running now';
-            } else {
-                examStatusSpan.classList.remove('text-danger', 'text-warning');
-                examStatusSpan.classList.add('text-success');
-                examStatusLabel.innerHTML = 'Done';
-            }
-
             $(document).ready(function() {
                 $.ajax({
                     url: '{{ config('app.url') }}/get-dashboard',
                     type: 'GET',
                     headers: {
-                        Authorization: "Bearer " + '{{Session::get('token')}}',
-                        UserId: {{Session::get('id')}}
+                        Authorization: "Bearer " + '{{Session::get('token_user')}}',
+                        UserId: {{Session::get('user_id')}}
                     },
                     success: function(response) {
                         if (response.success) {
@@ -243,5 +218,39 @@
                     }
                 });
             });
+
+
+            function updateToken(){
+                $.ajax({
+                    url: '{{ config('app.url') }}/updateToken',
+                    type: "POST",
+                    contentType: "application/x-www-form-urlencoded",
+                    headers: {
+                        Authorization: "Bearer " + '{{Session::get('token_user')}}',
+                        UserId: {{Session::get('user_id')}}
+                    },
+                    data: {
+                        id: {{ Session::get('user_id') }},
+                        new_token: $('#newToken').val()
+                    },
+                    success: function(response) {
+                        // console.log('Response from server:', response);
+                        // if (response.success) {
+                        //     const data = response.data[0];
+                        // } else {
+                        //     toastMessage.textContent = "Gagal login! Silakan cek kembali username dan password.";
+                        //     toastElement.classList.remove('text-bg-primary');
+                        //     toastElement.classList.add('bg-danger');
+                        //     toast.show();
+                        // }
+                    },
+                    error: function(xhr, status, error) {
+                        // toastMessage.textContent = xhr.responseJSON.message;
+                        // toastElement.classList.remove('text-bg-primary');
+                        // toastElement.classList.add('bg-danger');
+                        // toast.show();
+                    }
+                });
+            }
     </script>
 @endsection
