@@ -4,9 +4,18 @@ namespace App\Http\Controllers;
 use Session;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Config;
+
+
 
 class AuthControllers extends Controller
 {
+
+    function updateSessionToken(Request $request){
+        $newToken = $request->input('new_token');
+        Session::put('token_user', $newToken);
+        return response()->json(['success' => true, 'message' => 'Session token updated successfully']);
+    }
     public function login($username, $id, $token) {
         // Menghapus semua sesi sebelumnya
         Session::flush();
@@ -50,7 +59,7 @@ class AuthControllers extends Controller
         }
     
         $userData = $decodedResponse['data'][0];
-    
+
         foreach ($userData as $key => $value) {
             Session::put($key, $value);
         }

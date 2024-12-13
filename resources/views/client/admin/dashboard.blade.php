@@ -169,22 +169,18 @@
                     </button>
                 </div>
                 <div class="modal-body">
-                    <form>
+                    <div>
                         <div class="form-group">
                             <label for="newToken">Token</label>
                             <input type="text" class="form-control" id="newToken" placeholder="Enter new token">
                         </div>
-                        <button type="submit" class="btn btn-primary" onclick="updateToken()">Update Token</button>
+                        <button type="button" class="btn btn-primary" onclick="updateToken()">Update Token</button>
                     </form>
                 </div>
             </div>
         </div>
     </div>
-<<<<<<< HEAD
-    <script>
-=======
     <script>           
->>>>>>> 590e4d52a103bc590bc92d01e592cade77244af1
             $(document).ready(function() {
                 $.ajax({
                     url: '{{ config('app.url') }}/get-dashboard',
@@ -199,10 +195,10 @@
                             $('.text-gray-800').eq(0).text(0 + ' Group');
 
                             $('.text-primary.text-uppercase.mb-1').eq(1).text('Limit Exam');
-                            $('#limit_exam').text(response.data.limit_exam);
+                            $('#limit_exam').text(response.data.total_exam +" / "+response.data.limit_exam);
 
                             $('.text-primary.text-uppercase.mb-1').eq(2).text('Total User (3 Deactive)');
-                            $('#limit_user').text(response.data.limit_user);
+                            $('#limit_user').text(response.data.total_user +" / "+response.data.limit_user);
 
                             $('.text-danger.text-uppercase.mb-1').text('Expired Account');
                             var expiredAt = new Date(response.data.expired_at);
@@ -245,37 +241,54 @@
             });
 
 
-            function updateToken(){
+            function updateToken() {
                 $.ajax({
                     url: '{{ config('app.url') }}/updateToken',
                     type: "POST",
                     contentType: "application/x-www-form-urlencoded",
                     headers: {
-                        Authorization: "Bearer " + '{{Session::get('token_user')}}',
-                        UserId: {{Session::get('user_id')}}
+                        Authorization: "Bearer " + '{{ Session::get('token_user') }}',
+                        UserId: {{ Session::get('user_id') }}
                     },
                     data: {
                         id: {{ Session::get('user_id') }},
                         new_token: $('#newToken').val()
                     },
                     success: function(response) {
-                        // console.log('Response from server:', response);
-                        // if (response.success) {
-                        //     const data = response.data[0];
-                        // } else {
-                        //     toastMessage.textContent = "Gagal login! Silakan cek kembali username dan password.";
-                        //     toastElement.classList.remove('text-bg-primary');
-                        //     toastElement.classList.add('bg-danger');
-                        //     toast.show();
-                        // }
+                        console.log('Response from server:', response);
+                        if (response.success) {
+                            $.ajax({
+                                url: '/updateSessionToken'  , // Endpoint untuk update session token
+                                type: "GET",
+                                headers: {
+                                    Authorization: "Bearer " + '{{Session::get('token_user')}}',
+                                    UserId: {{Session::get('user_id')}}
+                                },
+                                data: {
+                                    new_token: $('#newToken').val() // Kirimkan token baru untuk update session
+                                },
+                                success: function(updateResponse) {
+                                    console.log('Session token updated:', updateResponse);
+                                    window.location.reload();
+                                },
+                                error: function(xhr, status, error) {
+                                    console.error('Failed to update session:', xhr.responseJSON.message);
+                                    toastMessage.textContent =  xhr.responseJSON.message;
+                                    toastElement.classList.remove('text-bg-primary');
+                                    toastElement.classList.add('bg-danger');
+                                    toast.show();
+                                }
+                            });
+                        } else {
+                            // Tangani jika respons tidak berhasil (response.success false)
+                            console.error('Failed to update token:', response.message);
+                        }
                     },
                     error: function(xhr, status, error) {
-                        // toastMessage.textContent = xhr.responseJSON.message;
-                        // toastElement.classList.remove('text-bg-primary');
-                        // toastElement.classList.add('bg-danger');
-                        // toast.show();
+                        console.error('AJAX Error:', error);
                     }
                 });
             }
+
     </script>
 @endsection

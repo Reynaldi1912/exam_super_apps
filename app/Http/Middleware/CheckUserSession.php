@@ -15,7 +15,6 @@ class CheckUserSession
             return $next($request);
         }
 
-        // Jika tidak ada session username, redirect ke halaman login
         return redirect('/login-page');
     }
 }

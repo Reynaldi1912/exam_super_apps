@@ -3,6 +3,9 @@
 namespace App\Providers;
 
 use Illuminate\Support\ServiceProvider;
+use Illuminate\Support\Facades\Session;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Http\Request;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -11,7 +14,7 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        // Tidak perlu melakukan apa-apa di sini
     }
 
     /**
@@ -19,10 +22,17 @@ class AppServiceProvider extends ServiceProvider
      */
     public function boot(): void
     {
-        $url = 'http://localhost:3000'; 
-        $token = 
-        config(
-            ['app.url' => $url]
-        );    
+        // Menyiapkan variabel default
+        $userData = 0;
+        $appData = -1;
+
+        // Mendapatkan session user_id
+        $url = 'http://localhost:3000';
+      
+
+        // Menyimpan konfigurasi yang dibutuhkan
+        config([
+            'app.url' => $url
+        ]);
     }
 }
