@@ -204,8 +204,8 @@
                             var expiredAt = new Date(response.data.expired_at);
                             $('#expired_account').text(expiredAt.toLocaleDateString('id-ID', { day: 'numeric', month: 'long', year: 'numeric' }));
 
-                            $('#dashboardCard').show(); // Hide the card if success is false
-                            $('#dashboardReminder').hide(); // Hide the card if success is false
+                            $('#dashboardCard').show(); 
+                            $('#dashboardReminder').hide(); 
 
                             const examStartTime = new Date('2024-12-20T07:00:00');
                             const examEndTime = new Date('2024-12-20T08:00:00');

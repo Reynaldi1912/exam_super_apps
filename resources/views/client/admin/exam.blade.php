@@ -1,8 +1,8 @@
 @extends('app')
 
 @section('content')
-<!-- Table -->
-<table class="table table-striped">
+
+<table class="table table-striped"  id="groupingsTable">
   <thead>
     <tr>
       <th scope="col">No</th>
@@ -15,36 +15,12 @@
     </tr>
   </thead>
   <tbody>
-    <tr data-id="1">
-      <th scope="row">1</th>
-      <td>Math Exam</td>
-      <td>2024-12-10</td>
-      <td>08:00</td>
-      <td>10:00</td>
-      <td>Kelas 7A, Kelas 8B</td>
-      <td>
-        <!-- Edit Exam Button -->
-        <button class="btn btn-warning" data-toggle="modal" data-target="#editExamModal" 
-          data-id="1" data-name="Math Exam" data-date="2024-12-10" 
-          data-start="08:00" data-end="10:00" data-groupings="Kelas 7A,Kelas 8B">
-          <i class="fa fa-pencil"></i>
-        </button>
-
-        <!-- Manage Grouping Button -->
-        <button class="btn btn-primary" data-toggle="modal" data-target="#manageGroupingModal" 
-          data-groupings="Kelas 7A,Kelas 8B">
-          Manage Grouping
-        </button>
-
-        <!-- Except Users Button -->
-        <button class="btn btn-danger" data-toggle="modal" data-target="#exceptUsersModal" 
-          data-users="user1,user2">
-          Except Users
-        </button>
-      </td>
-    </tr>
+   
   </tbody>
 </table>
+
+
+
 
 <!-- Edit Exam Modal -->
 <div class="modal fade" id="editExamModal" tabindex="-1" role="dialog" aria-labelledby="editExamModalLabel" aria-hidden="true">
@@ -99,9 +75,9 @@
       <div class="modal-body">
         <label for="grouping">Select Group</label>
         <select class="form-control select2" id="listGrouping" name="groupings[]" multiple>
-          <option value="Kelas 7A">Kelas 7A</option>
-          <option value="Kelas 8B">Kelas 8B</option>
-          <option value="Kelas 9C">Kelas 9C</option>
+          <option value="1">Kelas 7A</option>
+          <option value="2">Kelas 7B</option>
+          <option value="3">Kelas 7C</option>
         </select>
       </div>
       <div class="modal-footer">
@@ -124,9 +100,7 @@
       <div class="modal-body">
         <label for="exceptUsers">Select Users to Exclude</label>
         <select class="form-control select2" id="exceptUsersSelect" name="excluded_users[]" multiple>
-          <option value="user1">User 1</option>
-          <option value="user2">User 2</option>
-          <option value="user3">User 3</option>
+          <option value="1">Reynaldi</option>
         </select>
       </div>
       <div class="modal-footer">
@@ -137,39 +111,150 @@
 </div>
 
 <script>
-  $(document).ready(function() {
-    // Initialize Select2 for all select elements
+  $(document).ready(function () {
+      $.ajax({
+        url: `{{ config('app.url') }}/exams?userId=`+'{{Session::get('user_id')}}', // Endpoint to fetch groupings
+        type: 'GET',
+        success: function (response) {
+          const tableBody = $('#groupingsTable tbody');
+
+          tableBody.empty();
+          console.log(response);
+          response.data.forEach(data => {
+            const row = `
+              <tr data-id="1">
+                <th scope="row">1</th>
+                <td>${data.name}</td>
+                <td>${data.date}</td>
+                <td>${data.start_date}</td>
+                <td>${data.end_date}</td>
+                <td>  
+                  <button class="btn btn-primary manage-grouping-btn" data-id="1" data-groupings=${data.grouping_list_ids}>
+                    ${data.grouping_count} <i class="fa fa-users"></i>
+
+                  </button></td>
+                <td>
+                  <!-- Edit Exam Button -->
+                  <button class="btn btn-warning edit-exam-btn" data-id="1" data-name="Math Exam" data-date="2024-12-10" 
+                    data-start="08:00" data-end="10:00" data-groupings="">
+                    <i class="fa fa-pencil"></i>
+                  </button>                
+
+                  <button class="btn btn-danger except-users-btn" data-id="1" data-users=${data.except_user_ids}>
+                    ${data.except_users}
+                     <i class="fa fa-ban"></i>
+                  </button>
+                </td>
+              </tr>
+            `;
+            tableBody.append(row);
+          });
+        },
+        error: function () {
+          alert('Error loading groupings. Please try again.');
+        }
+      });
+
+    // Initialize Select2
     $('.select2').select2({
-      width: '100%',  // Full width
+      width: '100%',
       placeholder: 'Select an option',
-      allowClear: true  // Allow clearing the selection
+      allowClear: true
     });
 
-    // For the Manage Grouping Modal
-    $('#manageGroupingModal').on('show.bs.modal', function (event) {
-      var button = $(event.relatedTarget);  // Button that triggered the modal
-      var groupings = button.data('groupings');  // Get data from the button
-      var modal = $(this);
-      
-      // Split the groupings string into an array
-      var selectedGroupings = groupings ? groupings.split(',') : [];
-      
-      // Set the selected groupings in Select2
-      modal.find('#listGrouping').val(selectedGroupings).trigger('change');
+    // Handle Edit Exam Button Click
+    $(document).on('click', '.edit-exam-btn', function () {
+      const button = $(this);
+      const examId = button.data('id');
+
+      $('#editExamForm').find('#examName').val(button.data('name'));
+      $('#editExamForm').find('#examDate').val(button.data('date'));
+      $('#editExamForm').find('#startTime').val(button.data('start'));
+      $('#editExamForm').find('#endTime').val(button.data('end'));
+
+      $('#editExamForm').off('submit').on('submit', function (e) {
+        e.preventDefault();
+        const formData = $(this).serialize();
+
+        $.ajax({
+          url: `/update-exam/${examId}`,
+          type: 'POST',
+          data: formData,
+          success: function (response) {
+            alert('Exam updated successfully!');
+            location.reload();
+          },
+          error: function (xhr) {
+            alert('Error updating exam. Please try again.');
+          }
+        });
+      });
+
+      $('#editExamModal').modal('show');
     });
 
-    // For the Except Users Modal
-    $('#exceptUsersModal').on('show.bs.modal', function (event) {
-      var button = $(event.relatedTarget);  // Button that triggered the modal
-      var users = button.data('users');  // Get data from the button
-      var modal = $(this);
+    $(document).on('click', '.manage-grouping-btn', function () {
+      const button = $(this);
+      const examId = button.data('id');
+      const groupingsData = button.data('groupings'); // Ambil data dari atribut
+      const groupings = String(groupingsData).split(',');
 
-      // Split the users string into an array
-      var selectedUsers = users ? users.split(',') : [];
-      
-      // Set the selected users in Select2
-      modal.find('#exceptUsersSelect').val(selectedUsers).trigger('change');
+      $('#listGrouping').val(groupings).trigger('change');
+
+      $('#manageGroupingModal').off('submit').on('submit', function (e) {
+        e.preventDefault();
+
+        const selectedGroupings = $('#listGrouping').val();
+
+        $.ajax({
+          url: `/update-groupings/${examId}`,
+          type: 'POST',
+          data: { groupings: selectedGroupings },
+          success: function (response) {
+            alert('Groupings updated successfully!');
+            location.reload();
+          },
+          error: function (xhr) {
+            alert('Error updating groupings. Please try again.');
+          }
+        });
+      });
+
+      $('#manageGroupingModal').modal('show');
+    });
+
+    // Handle Except Users Button Click
+    $(document).on('click', '.except-users-btn', function () {
+      const button = $(this);
+      const examId = button.data('id');
+      const usersData = button.data('users'); // Ambil data dari atribut
+      const users = String(usersData).split(',');
+      $('#exceptUsersSelect').val(users).trigger('change');
+
+      $('#exceptUsersModal').off('submit').on('submit', function (e) {
+        e.preventDefault();
+
+        const excludedUsers = $('#exceptUsersSelect').val();
+
+        $.ajax({
+          url: `/update-excluded-users/${examId}`,
+          type: 'POST',
+          data: { excluded_users: excludedUsers },
+          success: function (response) {
+            alert('Excluded users updated successfully!');
+            location.reload();
+          },
+          error: function (xhr) {
+            alert('Error updating excluded users. Please try again.');
+          }
+        });
+      });
+
+      $('#exceptUsersModal').modal('show');
     });
   });
 </script>
 @endsection
+
+
+
