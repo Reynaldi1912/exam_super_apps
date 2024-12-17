@@ -182,6 +182,10 @@
     </div>
     <script>           
             $(document).ready(function() {
+                loadDashboard();
+            });
+
+            function loadDashboard(){
                 $.ajax({
                     url: '{{ config('app.url') }}/get-dashboard',
                     type: 'GET',
@@ -189,7 +193,9 @@
                         Authorization: "Bearer " + '{{Session::get('token_user')}}',
                         UserId: {{Session::get('user_id')}}
                     },
-                    success: function(response) {                        
+                    success: function(response) {   
+                        console.log(response);
+                                             
                         if (response.success) {
                             $('.text-primary.text-uppercase.mb-1').eq(0).text('Grouping User');
                             $('.text-gray-800').eq(0).text(0 + ' Group');
@@ -238,7 +244,7 @@
                         console.error('Error:', error);
                     }
                 });
-            });
+            }
 
 
             function updateToken() {

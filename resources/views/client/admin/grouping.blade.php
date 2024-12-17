@@ -1,35 +1,9 @@
 @extends('app')
-@section('content')
-<table class="table table-striped">
-  <thead>
-    <tr>
-      <th scope="col">No</th>
-      <th scope="col">Name</th>
-      <th scope="col">Level</th>
-      <th scope="col">Manage</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <th scope="row">1</th>
-      <td>Kelas 7A</td>
-      <td>7</td>
-      <td>
-        <button class="btn btn-warning" data-bs-toggle="modal" data-bs-target="#editModal">
-            <i class="fa fa-pencil"></i>
-        </button>
-        <button class="btn btn-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
-            <i class="fa fa-trash"></i>
-        </button>
-      </td>
-    </tr>
-  </tbody>
-</table>@extends('app')
 
 @section('content')
 <div class="container">
   <!-- Table -->
-  <table class="table table-striped">
+  <table class="table table-striped" id="groupingsTable">
     <thead>
       <tr>
         <th scope="col">No</th>
@@ -39,21 +13,7 @@
       </tr>
     </thead>
     <tbody>
-      <tr data-id="1">
-        <th scope="row">1</th>
-        <td>Kelas 7A</td>
-        <td>7</td>
-        <td>
-          <!-- Edit button triggers the edit modal -->
-          <button class="btn btn-warning" onclick="openEditModal('Kelas 7A', 7)">
-            <i class="fa fa-pencil"></i>
-          </button>
-          <!-- Delete button triggers the delete modal -->
-          <button class="btn btn-danger" onclick="openDeleteModal(1)">
-            <i class="fa fa-trash"></i>
-          </button>
-        </td>
-      </tr>
+    
     </tbody>
   </table>
 
@@ -105,7 +65,6 @@
 <!-- Scripts -->
 <script>
   $(document).ready(function () {
-    // Open Edit Modal
     window.openEditModal = function (name, level) {
       $('#className').val(name);
       $('#classLevel').val(level);
@@ -117,6 +76,10 @@
       $('#deleteModal').data('id', id);
       $('#deleteModal').modal('show');
     };
+
+    loadGroupings();
+  });
+
 
     // Save Changes for Edit Modal
     $('#editClassForm').on('submit', function (e) {
@@ -144,28 +107,62 @@
     });
 
     // Confirm Delete
-    $('#confirmDeleteButton').on('click', function () {
-      const id = $('#deleteModal').data('id');
+  $('#confirmDeleteButton').on('click', function () {
+    const id = $('#deleteModal').data('id');
 
-      $.ajax({
-        url: '/delete-class/' + id, // Update with your Laravel route
-        method: 'POST',
-        data: {
-          _token: '{{ csrf_token() }}'
-        },
-        success: function () {
-          alert('Class deleted successfully!');
-          $('#deleteModal').modal('hide');
-          location.reload(); // Reload the page
-        },
-        error: function () {
-          alert('Error deleting class.');
-        }
-      });
+    $.ajax({
+      url: '/delete-class/' + id, // Update with your Laravel route
+      method: 'POST',
+      data: {
+        _token: '{{ csrf_token() }}'
+      },
+      success: function () {
+        alert('Class deleted successfully!');
+        $('#deleteModal').modal('hide');
+        location.reload(); // Reload the page
+      },
+      error: function () {
+        alert('Error deleting class.');
+      }
     });
   });
+
+  function loadGroupings() {
+      $.ajax({
+        url: `{{ config('app.url') }}/groupings?userId=`+'{{Session::get('user_id')}}',
+        type: 'GET',
+        success: function (response) {
+          const tableBody = $('#groupingsTable tbody');
+  
+          tableBody.empty();
+          console.log(response);
+          response.data.forEach(data => {
+            const row = `
+                <tr data-id="1">
+                  <th scope="row">1</th>
+                  <td>${data.name}</td>
+                  <td>${data.level}</td>
+                  <td>
+                    <!-- Edit button triggers the edit modal -->
+                    <button class="btn btn-warning" onclick="openEditModal('${data.name}', ${data.level})">
+                      <i class="fa fa-pencil"></i>
+                    </button>
+                    <!-- Delete button triggers the delete modal -->
+                    <button class="btn btn-danger" onclick="openDeleteModal(${data.id})">
+                      <i class="fa fa-trash"></i>
+                    </button>
+                  </td>
+                </tr>
+            `;
+            tableBody.append(row);
+          });
+        },
+        error: function () {
+          alert('Error loading groupings. Please try again.');
+        }
+    });
+  }
 </script>
-@endsection
 
 
 <!-- Modal Edit -->

@@ -74,10 +74,8 @@
       </div>
       <div class="modal-body">
         <label for="grouping">Select Group</label>
-        <select class="form-control select2" id="listGrouping" name="groupings[]" multiple>
-          <option value="1">Kelas 7A</option>
-          <option value="2">Kelas 7B</option>
-          <option value="3">Kelas 7C</option>
+        <select class="form-control select2"  id="listGrouping"  name="groupings[]" multiple>
+       
         </select>
       </div>
       <div class="modal-footer">
@@ -99,8 +97,7 @@
       </div>
       <div class="modal-body">
         <label for="exceptUsers">Select Users to Exclude</label>
-        <select class="form-control select2" id="exceptUsersSelect" name="excluded_users[]" multiple>
-          <option value="1">Reynaldi</option>
+        <select class="form-control select2" id="listUser" name="excluded_users[]" multiple>
         </select>
       </div>
       <div class="modal-footer">
@@ -112,12 +109,33 @@
 
 <script>
   $(document).ready(function () {
-      $.ajax({
+ 
+    $('#listGrouping').select2({
+        placeholder: 'Pilih Grouping',
+        allowClear: true,
+        width: '100%'
+    });
+    $('#listUser').select2({
+        placeholder: 'Pilih Users',
+        allowClear: true,
+        width: '100%'
+    });
+
+    loadTable();
+    loadGroupings();
+    loadUsers();
+  });
+</script>
+
+
+<script>
+  function loadTable(){
+    $.ajax({
         url: `{{ config('app.url') }}/exams?userId=`+'{{Session::get('user_id')}}', // Endpoint to fetch groupings
         type: 'GET',
         success: function (response) {
           const tableBody = $('#groupingsTable tbody');
-
+  
           tableBody.empty();
           console.log(response);
           response.data.forEach(data => {
@@ -131,7 +149,7 @@
                 <td>  
                   <button class="btn btn-primary manage-grouping-btn" data-id="1" data-groupings=${data.grouping_list_ids}>
                     ${data.grouping_count} <i class="fa fa-users"></i>
-
+  
                   </button></td>
                 <td>
                   <!-- Edit Exam Button -->
@@ -139,10 +157,10 @@
                     data-start="08:00" data-end="10:00" data-groupings="">
                     <i class="fa fa-pencil"></i>
                   </button>                
-
+  
                   <button class="btn btn-danger except-users-btn" data-id="1" data-users=${data.except_user_ids}>
                     ${data.except_users}
-                     <i class="fa fa-ban"></i>
+                      <i class="fa fa-ban"></i>
                   </button>
                 </td>
               </tr>
@@ -153,7 +171,8 @@
         error: function () {
           alert('Error loading groupings. Please try again.');
         }
-      });
+    });
+  }
 
     // Initialize Select2
     $('.select2').select2({
@@ -229,12 +248,15 @@
       const examId = button.data('id');
       const usersData = button.data('users'); // Ambil data dari atribut
       const users = String(usersData).split(',');
-      $('#exceptUsersSelect').val(users).trigger('change');
+
+      console.log(users);
+      
+      $('#listUser').val(users).trigger('change');
 
       $('#exceptUsersModal').off('submit').on('submit', function (e) {
         e.preventDefault();
 
-        const excludedUsers = $('#exceptUsersSelect').val();
+        const excludedUsers = $('#listUser').val();
 
         $.ajax({
           url: `/update-excluded-users/${examId}`,
@@ -252,7 +274,59 @@
 
       $('#exceptUsersModal').modal('show');
     });
-  });
+
+    function loadGroupings() {
+      const selectElement = $('#listGrouping');
+
+        $.ajax({
+            url: `{{ config('app.url') }}/groupings?userId=`+'{{Session::get('user_id')}}',
+            type: 'GET',
+            success: function (response) {
+              if (response.success && response.data) {
+                  selectElement.empty();
+
+                  response.data.forEach(function(grouping) {
+                      const option = $('<option></option>')
+                          .val(grouping.id) 
+                          .text(grouping.name);
+                      selectElement.append(option);
+                  });
+                } else {
+                    alert(response.message || 'Failed to load data.');
+                }
+            },
+            error: function () {
+                alert('Gagal memuat data groupings.');
+            }
+        });
+    }
+
+    function loadUsers() {
+      const selectElementUser = $('#listUser');
+        $.ajax({
+            url: `{{ config('app.url') }}/users?userId=`+'{{Session::get('user_id')}}',
+            type: 'GET',
+            success: function (response) {
+              if (response.success && response.data) {
+                selectElementUser.empty();
+                  console.log(response.data);
+                  
+                  response.data.forEach(function(users) {
+                      const option = $('<option></option>')
+                          .val(users.id) 
+                          .text(users.username);
+                          selectElementUser.append(option);
+                  });
+                } else {
+                    alert(response.message || 'Failed to load data.');
+                }
+            },
+            error: function () {
+                alert('Gagal memuat data groupings.');
+            }
+        });
+    }
+
 </script>
 @endsection
 

@@ -24,6 +24,7 @@ class FetchUserTokens
                 $userData = json_decode($userResponse, true);
                 $appData = json_decode($appResponse, true);
 
+                // echo json_encode($appData);
                 if (isset($userData['data']['token_app'], $appData['data']['token']) &&
                     $userData['data']['token_app'] === $appData['data']['token']) {
                     return $next($request); // Lanjutkan request jika token valid

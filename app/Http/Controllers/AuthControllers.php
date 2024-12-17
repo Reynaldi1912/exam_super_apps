@@ -22,7 +22,7 @@ class AuthControllers extends Controller
     
         // URL API
         $url = config('app.url') . '/users?id=' . $id;
-    
+
         // Inisialisasi cURL
         $ch = curl_init($url);
     
@@ -47,7 +47,6 @@ class AuthControllers extends Controller
     
         // Decode JSON response
         $decodedResponse = json_decode($response, true);
-    
         // Periksa validitas JSON
         if (json_last_error() !== JSON_ERROR_NONE) {
             die("JSON Decode Error: " . json_last_error_msg());

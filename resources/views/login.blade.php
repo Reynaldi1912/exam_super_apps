@@ -90,6 +90,8 @@
               console.log('Response dari server:', response);
               if (response.success) {
                   const data = response.data[0];
+                  console.log(data);
+                  
                   window.location.href = `/create-session/${username}/${data.id}/${data.token_app}`;
               } else {
                   toastMessage.textContent = "Gagal login! Silakan cek kembali username dan password.";

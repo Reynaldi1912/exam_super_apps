@@ -2,7 +2,7 @@
 
 @section('content')
 <!-- Table -->
-<table class="table table-striped">
+<table class="table table-striped" id="usersTable">
   <thead>
     <tr>
       <th scope="col">No</th>
@@ -13,20 +13,7 @@
     </tr>
   </thead>
   <tbody>
-    <tr data-id="1">
-      <th scope="row">1</th>
-      <td>Yasril</td>
-      <td>Kelas 7A</td>
-      <td>
-        <i class="fa fa-close text-danger" id="status-icon"></i>
-      </td>
-      <td>
-        <!-- Edit button triggers the edit modal -->
-        <button class="btn btn-warning" onclick="openEditModal(1, 'Yasril', 'Kelas 7A', 'Inactive')"><i class="fa fa-pencil"></i></button>
-        <!-- Delete button triggers the delete modal -->
-        <button class="btn btn-danger" onclick="openDeleteModal(1)"><i class="fa fa-trash"></i></button>
-      </td>
-    </tr>
+   
   </tbody>
 </table>
 
@@ -52,10 +39,8 @@
           </div>
           <div class="form-group">
             <label for="grouping">Grouping</label>
-            <select class="form-control" id="grouping">
-              <option value="Kelas 7A">Kelas 7A</option>
-              <option value="Kelas 8B">Kelas 8B</option>
-              <option value="Kelas 9C">Kelas 9C</option>
+            <select class="form-control" id="listGrouping">
+         
             </select>
           </div>
           <div class="form-group">
@@ -100,6 +85,15 @@
 <script>
   $(document).ready(function () {
     // Open Edit Modal with pre-populated data
+    $('#listGrouping').select2({
+        placeholder: 'Pilih Grouping',
+        allowClear: true,
+        width: '100%'
+    });
+
+    loadGroupings();
+
+    loadUsers();
     window.openEditModal = function(id, username, grouping, status) {
       $('#username').val(username);
       $('#grouping').val(grouping);
@@ -113,7 +107,10 @@
       $('#deleteModal').data('id', id); // Store the user ID in the modal
       $('#deleteModal').modal('show');
     }
+  });
 
+
+  
     // Save Changes for Edit Modal
     $('#saveChangesButton').on('click', function () {
       var userId = $('#editModal').data('id');
@@ -163,6 +160,65 @@
         }
       });
     });
-  });
+  function loadUsers() {
+      $.ajax({
+        url: `{{ config('app.url') }}/users-exam?userId=`+'{{Session::get('user_id')}}',
+        type: 'GET',
+        success: function (response) {
+          const tableBody = $('#usersTable tbody');
+  
+          tableBody.empty();
+          console.log(response);
+          response.data.forEach(data => {
+            const row = `
+                <tr data-id="1">
+                  <th scope="row">1</th>
+                  <td>${data.username}</td>
+                  <td>${data.grouping_name}</td>
+                  <td>
+                    <i class="fa fa-close text-danger" id="status-icon"></i>
+                  </td>
+                  <td>
+                    <!-- Edit button triggers the edit modal -->
+                    <button class="btn btn-warning" onclick="openEditModal(${data.id}, '${data.username}', '${data.grouping_name}', 'Inactive')"><i class="fa fa-pencil"></i></button>
+                    <!-- Delete button triggers the delete modal -->
+                    <button class="btn btn-danger" onclick="openDeleteModal(${data.id})"><i class="fa fa-trash"></i></button>
+                  </td>
+                </tr>
+            `;
+            tableBody.append(row);
+          });
+        },
+        error: function () {
+          alert('Error loading groupings. Please try again.');
+        }
+    });
+  }
+
+  function loadGroupings() {
+      const selectElement = $('#listGrouping');
+
+        $.ajax({
+            url: `{{ config('app.url') }}/groupings?userId=`+'{{Session::get('user_id')}}',
+            type: 'GET',
+            success: function (response) {
+              if (response.success && response.data) {
+                  selectElement.empty();
+
+                  response.data.forEach(function(grouping) {
+                      const option = $('<option></option>')
+                          .val(grouping.id) 
+                          .text(grouping.name);
+                      selectElement.append(option);
+                  });
+                } else {
+                    alert(response.message || 'Failed to load data.');
+                }
+            },
+            error: function () {
+                alert('Gagal memuat data groupings.');
+            }
+        });
+    }
 </script>
 @endsection
