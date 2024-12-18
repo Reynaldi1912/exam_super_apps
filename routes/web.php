@@ -15,6 +15,8 @@ use App\Http\Middleware\RedirectIfAuthenticated;
 Route::group(['middleware' => CheckUserSession::class], function () {
     Route::group(['middleware' => FetchUserTokens::class], function () {
         // Route::group(['middleware' => [RoleRedirect::class, 'admin']], function () {
+            Route::get('/results', [AdminControllers_GET::class, 'results']);
+            Route::get('/list-results', [AdminControllers_GET::class, 'list_results']);
             Route::get('/users', [AdminControllers_GET::class, 'users']);
             Route::get('/grouping', [AdminControllers_GET::class, 'grouping']);
             Route::get('/question-bank/{id}', [AdminControllers_GET::class, 'questionbank']);

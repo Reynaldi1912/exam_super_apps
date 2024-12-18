@@ -24,4 +24,10 @@ class AdminControllers_GET extends Controller
     public function list_bank(Request $request){
         return view('client.admin.listQuestionBank');
     }
+    public function results(Request $request){
+        return view('client.admin.results');
+    }
+    public function list_results(Request $request){
+        return view('client.admin.listResults');
+    }
 }

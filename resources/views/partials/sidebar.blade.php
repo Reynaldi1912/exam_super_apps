@@ -61,7 +61,7 @@
 
     <!-- Nav Item - Charts -->
     <li class="nav-item">
-        <a class="nav-link" href="charts.html">
+        <a class="nav-link" href="/list-results">
             <i class="fas fa-fw fa-file-text"></i>
             <span>Exam Results</span></a>
     </li>
