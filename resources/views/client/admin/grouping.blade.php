@@ -1,6 +1,9 @@
 @extends('app')
 
 @section('content')
+@php
+  $menus_name = 'Groupings'
+@endphp
 <div class="container">
   <!-- Table -->
   <table class="table table-striped" id="groupingsTable">
@@ -136,10 +139,10 @@
   
           tableBody.empty();
           console.log(response);
-          response.data.forEach(data => {
+          response.data.forEach((data , index) => {
             const row = `
-                <tr data-id="1">
-                  <th scope="row">1</th>
+                <tr data-id="${index + 1}">
+                  <th scope="row">${index + 1}</th>
                   <td>${data.name}</td>
                   <td>${data.level}</td>
                   <td>

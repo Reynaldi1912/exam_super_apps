@@ -90,13 +90,6 @@
                 <span>Dashboard</span></a>
         </li>
         <hr class="sidebar-divider d-none d-md-block">
-
-        <li class="nav-item">
-            <a class="nav-link" href="/exam">
-                <i class="fas fa-fw fa-chart-area"></i>
-                <span>Exam</span></a>
-        </li>
-
         
     @endif
 

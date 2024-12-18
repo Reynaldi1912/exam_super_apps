@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 class AdminControllers_GET extends Controller
 {
     public function index(Request $request){
-        return view('client.admin.dashboard');
+        return view('dashboard');
     }
     public function users(Request $request){
         return view('client.admin.users');

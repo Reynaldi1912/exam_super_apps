@@ -28,7 +28,7 @@ Route::group(['middleware' => CheckUserSession::class], function () {
             // Route::get('/', [UserControllers_GET::class, 'index']);
         // });
         
-    });
+    // });
 
     Route::get('/logout', [AuthControllers::class, 'logout']);
 });

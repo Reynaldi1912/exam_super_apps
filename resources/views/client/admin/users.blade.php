@@ -1,6 +1,9 @@
 @extends('app')
 
 @section('content')
+@php
+  $menus_name = 'Users'
+@endphp
 <!-- Table -->
 <table class="table table-striped" id="usersTable">
   <thead>
@@ -169,23 +172,29 @@
   
           tableBody.empty();
           console.log(response);
-          response.data.forEach(data => {
+          response.data.forEach((data , index) => {
             const row = `
-                <tr data-id="1">
-                  <th scope="row">1</th>
-                  <td>${data.username}</td>
-                  <td>${data.grouping_name}</td>
-                  <td>
-                    <i class="fa fa-close text-danger" id="status-icon"></i>
-                  </td>
-                  <td>
-                    <!-- Edit button triggers the edit modal -->
-                    <button class="btn btn-warning" onclick="openEditModal(${data.id}, '${data.username}', '${data.grouping_name}', 'Inactive')"><i class="fa fa-pencil"></i></button>
-                    <!-- Delete button triggers the delete modal -->
-                    <button class="btn btn-danger" onclick="openDeleteModal(${data.id})"><i class="fa fa-trash"></i></button>
-                  </td>
-                </tr>
-            `;
+                        <tr data-id="${index + 1}">
+                          <th scope="row">${index + 1}</th>
+                          <td>${data.username}</td>
+                          <td>${data.grouping_name}</td>
+                          <td>
+                            ${data.is_active == 0 
+                              ? '<i class="fa fa-close text-danger" id="status-icon"></i>' 
+                              : '<i class="fa fa-check text-success" id="status-icon"></i>'}
+                          </td>
+                          <td>
+                            <!-- Edit button triggers the edit modal -->
+                            <button class="btn btn-warning" onclick="openEditModal(${data.id}, '${data.username}', '${data.grouping_name}', '${data.is_active == 0 ? 'Inactive' : 'Active'}')">
+                              <i class="fa fa-pencil"></i>
+                            </button>
+                            <!-- Delete button triggers the delete modal -->
+                            <button class="btn btn-danger" onclick="openDeleteModal(${data.id})">
+                              <i class="fa fa-trash"></i>
+                            </button>
+                          </td>
+                        </tr>
+                      `;
             tableBody.append(row);
           });
         },

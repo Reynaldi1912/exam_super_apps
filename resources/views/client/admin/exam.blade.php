@@ -1,7 +1,9 @@
 @extends('app')
 
 @section('content')
-
+@php
+  $menus_name = 'Exams'
+@endphp
 <table class="table table-striped"  id="groupingsTable">
   <thead>
     <tr>
@@ -138,10 +140,10 @@
   
           tableBody.empty();
           console.log(response);
-          response.data.forEach(data => {
+          response.data.forEach((data,index) => {
             const row = `
-              <tr data-id="1">
-                <th scope="row">1</th>
+              <tr data-id="${index + 1}">
+                <th scope="row">${index + 1}</th>
                 <td>${data.name}</td>
                 <td>${data.date}</td>
                 <td>${data.start_date}</td>
@@ -304,7 +306,7 @@
     function loadUsers() {
       const selectElementUser = $('#listUser');
         $.ajax({
-            url: `{{ config('app.url') }}/users?userId=`+'{{Session::get('user_id')}}',
+            url: `{{ config('app.url') }}/users-master?userId=`+'{{Session::get('user_id')}}',
             type: 'GET',
             success: function (response) {
               if (response.success && response.data) {

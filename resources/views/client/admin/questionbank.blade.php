@@ -1,6 +1,8 @@
 @extends('app')
 @section('content')
-
+@php
+    $menus_name = 'Manage Question'
+@endphp
 
 <div class="row">
     <!-- Section Kartu Jenis Soal -->
@@ -133,7 +135,11 @@
         });
 
         // Event listener for question type change
-        $('#question_type').on('change', function () {
+        
+    });
+
+
+    $('#question_type').on('change', function () {
             const questionType = $(this).val();
             const optionsContainer = $('#options_container');
             optionsContainer.empty();
@@ -209,7 +215,8 @@
                 }
             });
         });
-    });
+
+    
 </script>
 
 <style>

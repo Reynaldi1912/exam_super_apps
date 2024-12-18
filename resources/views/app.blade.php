@@ -44,7 +44,7 @@
         <div id="content-wrapper" class="flex-column">
 
             <!-- Main Content -->
-            @include('partials.header')
+            @include('partials.header', ['menus_name' => $menus_name])
             <!-- End of Main Content -->
             <div class="container-fluid">
 
