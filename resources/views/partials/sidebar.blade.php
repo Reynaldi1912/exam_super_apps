@@ -62,13 +62,8 @@
     <!-- Nav Item - Charts -->
     <li class="nav-item">
         <a class="nav-link" href="/list-results">
-            <i class="fas fa-fw fa-file-text"></i>
-            <span>Exam Results</span></a>
-    </li>
-    <li class="nav-item">
-        <a class="nav-link" href="charts.html">
             <i class="fas fa-fw fa-star"></i>
-            <span>Score</span></a>
+            <span>Exam Results</span></a>
     </li>
 
     <!-- Divider -->
