@@ -7,6 +7,7 @@ use App\Http\Controllers\ExamControllers_GET;
 use App\Http\Controllers\UserControllers_GET;
 use App\Http\Controllers\MasterControllers;
 use App\Http\Middleware\CheckUserSession;
+use App\Http\Middleware\IsExamSession;
 use App\Http\Middleware\FetchUserTokens;
 use App\Http\Middleware\RoleRedirect;
 use App\Http\Middleware\RedirectIfAuthenticated;
@@ -22,7 +23,11 @@ Route::group(['middleware' => CheckUserSession::class], function () {
             Route::get('/question-bank/{id}', [AdminControllers_GET::class, 'questionbank']);
             Route::get('/exam-data', [AdminControllers_GET::class, 'exam']);
             Route::get('/list-bank', [AdminControllers_GET::class, 'list_bank']);
-            Route::get('/exam', [ExamControllers_GET::class, 'index']);
+            
+            Route::get('/set-exam-session/', [ExamControllers_GET::class, 'set_exam_session']);
+            Route::group(['middleware' => IsExamSession::class], function () {
+                Route::get('/exam/{id}', [ExamControllers_GET::class, 'index']);
+            });
             Route::get('/', [AdminControllers_GET::class, 'index']);
         });
         

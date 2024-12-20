@@ -20,29 +20,23 @@ class AuthControllers extends Controller
         // Menghapus semua sesi sebelumnya
         Session::flush();
     
-        // URL API
         $url = config('app.url') . '/users?id=' . $id;
 
-        // Inisialisasi cURL
         $ch = curl_init($url);
     
-        // Opsi cURL
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, [
             "Authorization: Bearer $token"
         ]);
     
-        // Eksekusi cURL
         $response = curl_exec($ch);
     
-        // Periksa apakah ada error pada cURL
         if ($response === false) {
             $error = curl_error($ch);
             curl_close($ch);
             die("cURL Error: $error");
         }
     
-        // Tutup cURL
         curl_close($ch);
     
         // Decode JSON response

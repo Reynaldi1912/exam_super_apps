@@ -150,7 +150,7 @@
             </div>
             <div class="modal-body">
                 Anda telah terdeteksi meninggalkan layar. Pastikan tetap fokus pada ujian!
-                <br><b>Jika belum kembali dalam waktu 30 detik sudah ditentukan ujian anda dianggap selesai </b>
+                <br></b>
                 <br>
                 <i class="font-weight-bold text-danger" id="countdown"></i>
             </div>
@@ -168,9 +168,31 @@
     $(document).ready(async function() {
         document.querySelector('#nomorSoal').textContent = numberParam;
         await onLoadPage();
-        document.querySelector('#nextPage').href = '/exam?number=' + (numberParam + 1);
-        document.querySelector('#prevPage').href = '/exam?number=' + (numberParam - 1);
+        const encryptedId = '{{ $id }}'; 
+        console.log(encryptedId);
+        
+        document.querySelector('#nextPage').href = `/exam/${encryptedId}?number=${numberParam + 1}`;
+        document.querySelector('#prevPage').href = `/exam/${encryptedId}?number=${numberParam - 1}`;
 
+        window.addEventListener('blur', () => {
+            console.log('Pengguna meninggalkan jendela browser 2.');
+            modal.show();
+        });
+
+        window.addEventListener('focus', () => {
+            console.log('Pengguna kembali ke jendela browser 2.');
+            modal.hide();
+        });
+
+        // window.addEventListener('pagehide', () => {
+        //     console.log('Pengguna mungkin menutup atau meninggalkan halaman.');
+        //     modal.show();
+        // });
+
+        // window.addEventListener('pageshow', () => {
+        //     console.log('Pengguna kembali ke halaman.');
+        //     modal.hide();
+        // });
     });
 
     const leaveAudio = document.getElementById('leaveAudio'); 
