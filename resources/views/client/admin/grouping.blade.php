@@ -4,7 +4,7 @@
 @php
   $menus_name = 'Groupings'
 @endphp
-<div class="container">
+<div class="container-fluid">
   <!-- Table -->
   <table class="table table-striped" id="groupingsTable">
     <thead>

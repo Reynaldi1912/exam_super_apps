@@ -27,7 +27,8 @@ class AppServiceProvider extends ServiceProvider
         $appData = -1;
 
         // Mendapatkan session user_id
-        $url = 'http://localhost:7000';
+        // $url = 'http://localhost:7000';
+        $url = 'http://192.168.1.7:7000';
       
 
         // Menyimpan konfigurasi yang dibutuhkan

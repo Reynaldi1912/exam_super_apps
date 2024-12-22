@@ -102,7 +102,10 @@
                     <div class="text-end">
                         <span class="badge bg-primary p-2 p-sm-3 timer-text">
                             Sisa Waktu: 01:59:21
-                        </span>                    
+                        </span>  
+                        <span class="badge bg-danger p-2 p-sm-3 timer-text" id="leaveCount">
+                            Out : 0 x
+                        </span>
                     </div>
                 </div>
 
@@ -164,6 +167,7 @@
 
 <script>
     const numberParam = parseInt(getUrlParameter('number'));  // Mengonversi 'number' ke integer
+    let leaveCount = 0; // Inisialisasi counter
 
     $(document).ready(async function() {
         document.querySelector('#nomorSoal').textContent = numberParam;
@@ -174,15 +178,23 @@
         document.querySelector('#nextPage').href = `/exam/${encryptedId}?number=${numberParam + 1}`;
         document.querySelector('#prevPage').href = `/exam/${encryptedId}?number=${numberParam - 1}`;
 
+        function updateLeaveCount() {
+            document.getElementById('leaveCount').textContent = `Keluar: ${leaveCount} kali`;
+        }
+
+        // Event ketika pengguna meninggalkan halaman
         window.addEventListener('blur', () => {
-            console.log('Pengguna meninggalkan jendela browser 2.');
-            modal.show();
+            leaveCount++; // Tingkatkan counter
+            updateLeaveCount(); // Perbarui tampilan counter
+            console.log('Pengguna meninggalkan jendela browser.');
+            modal.show(); // Tampilkan modal
         });
 
+        // Event ketika pengguna kembali ke halaman
         window.addEventListener('focus', () => {
-            console.log('Pengguna kembali ke jendela browser 2.');
-            modal.hide();
-        });
+            console.log('Pengguna kembali ke jendela browser.');
+            modal.hide(); // Sembunyikan modal
+});
 
         // window.addEventListener('pagehide', () => {
         //     console.log('Pengguna mungkin menutup atau meninggalkan halaman.');
