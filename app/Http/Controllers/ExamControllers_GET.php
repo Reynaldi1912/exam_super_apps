@@ -31,9 +31,19 @@ class ExamControllers_GET extends Controller
         $expiredTime = $end_date;      
         Session::put('expired_exam', $expiredTime);
         Session::put('exam_id', $id);
+        Session::put('out', 0);
 
 
         return true;
+    }
+
+    public function updateSessionOnExam(){
+        $sessionCount = Session::get('out') + 1;
+        Session::put('out', $sessionCount);
+
+        $result['success'] = true;
+        $result['message'] = 'session count has set';
+        return $result;
     }
 
 }

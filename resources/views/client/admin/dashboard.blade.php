@@ -294,4 +294,9 @@
                 });
             }
 
+            
     </script>
+
+<script src="../sb-admin/vendor/chart.js/Chart.min.js"></script>
+<script src="../sb-admin/js/demo/chart-area-demo.js"></script>
+<script src="../sb-admin/js/demo/chart-pie-demo.js"></script>

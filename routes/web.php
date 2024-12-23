@@ -24,6 +24,7 @@ Route::group(['middleware' => CheckUserSession::class], function () {
             Route::get('/exam-data', [AdminControllers_GET::class, 'exam']);
             Route::get('/list-bank', [AdminControllers_GET::class, 'list_bank']);
             
+            Route::get('/update-session-on-exam/', [ExamControllers_GET::class, 'updateSessionOnExam']);
             Route::get('/set-exam-session/', [ExamControllers_GET::class, 'set_exam_session']);
             Route::group(['middleware' => IsExamSession::class], function () {
                 Route::get('/exam/{id}', [ExamControllers_GET::class, 'index']);

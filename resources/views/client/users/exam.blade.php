@@ -104,7 +104,7 @@
                             Sisa Waktu: 01:59:21
                         </span>  
                         <span class="badge bg-danger p-2 p-sm-3 timer-text" id="leaveCount">
-                            Out : 0 x
+                            {{Session::get('out')}}
                         </span>
                     </div>
                 </div>
@@ -149,7 +149,6 @@
         <div class="modal-content">
             <div class="modal-header">
                 <h5 class="modal-title" id="mouseleaveModalLabel">Peringatan</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 Anda telah terdeteksi meninggalkan layar. Pastikan tetap fokus pada ujian!
@@ -163,75 +162,69 @@
         </div>
     </div>
 </div>
-<!-- <audio id="leaveAudio" src="../mp3/leave-sound.mp3" loop></audio> -->
 
 <script>
-    const numberParam = parseInt(getUrlParameter('number'));  // Mengonversi 'number' ke integer
-    let leaveCount = 0; // Inisialisasi counter
+    const numberParam = parseInt(getUrlParameter('number')); 
+    const leaveAudio = document.getElementById('leaveAudio'); 
+    const modal = new bootstrap.Modal(document.getElementById('mouseleaveModal'));
+    const countdownElement = document.getElementById('countdown'); 
+    let isModalVisible = false;
+    let leaveCount = '{{Session::get('out')}}';
 
     $(document).ready(async function() {
         document.querySelector('#nomorSoal').textContent = numberParam;
         await onLoadPage();
         const encryptedId = '{{ $id }}'; 
-        console.log(encryptedId);
         
         document.querySelector('#nextPage').href = `/exam/${encryptedId}?number=${numberParam + 1}`;
         document.querySelector('#prevPage').href = `/exam/${encryptedId}?number=${numberParam - 1}`;
+        let isAltPressed = false;
+        let isPageNavigation = false; 
+        const isMobile = window.innerWidth <= 768;
 
-        function updateLeaveCount() {
-            document.getElementById('leaveCount').textContent = `Keluar: ${leaveCount} kali`;
+        
+        if (isMobile) {
+            console.log('ismobile');
+            window.addEventListener('blur', () => {
+                console.log('Pengguna meninggalkan jendela browser.');
+                updateSessionOut();
+                leaveCount++;
+                updateLeaveCount();
+                modal.show(); 
+            });
+    
+            window.addEventListener('focus', () => {
+                console.log('Pengguna kembali ke jendela browser.');
+            });
+    
+            document.querySelectorAll('#prevPage, #nextPage, .halaman').forEach(button => {
+                button.addEventListener('click', () => {
+                    isPageNavigation = true;
+                });
+            });
         }
 
-        // Event ketika pengguna meninggalkan halaman
-        window.addEventListener('blur', () => {
-            leaveCount++; // Tingkatkan counter
-            updateLeaveCount(); // Perbarui tampilan counter
-            console.log('Pengguna meninggalkan jendela browser.');
-            modal.show(); // Tampilkan modal
-        });
-
-        // Event ketika pengguna kembali ke halaman
-        window.addEventListener('focus', () => {
-            console.log('Pengguna kembali ke jendela browser.');
-            modal.hide(); // Sembunyikan modal
-});
-
-        // window.addEventListener('pagehide', () => {
-        //     console.log('Pengguna mungkin menutup atau meninggalkan halaman.');
-        //     modal.show();
-        // });
-
-        // window.addEventListener('pageshow', () => {
-        //     console.log('Pengguna kembali ke halaman.');
-        //     modal.hide();
-        // });
-    });
-
-    const leaveAudio = document.getElementById('leaveAudio'); 
-    const modal = new bootstrap.Modal(document.getElementById('mouseleaveModal'));
-    let isModalVisible = false; 
-    const countdownElement = document.getElementById('countdown'); 
-
-    document.addEventListener('mouseleave', () => {
-        if (!isModalVisible) { 
-            leaveAudio.play(); 
-            modal.show(); 
-            isModalVisible = true;
-        }
-    });
-
-    modal._element.addEventListener('hidden.bs.modal', () => {
-        isModalVisible = false;
-        leaveAudio.pause();
-        leaveAudio.currentTime = 0;
-    });
-
-    document.addEventListener('mouseenter', () => {
-        if (isModalVisible) {
-            modal.hide();
-            leaveAudio.pause();
-            leaveAudio.currentTime = 0;
-            isModalVisible = false;
+        if (!isMobile) {
+            document.addEventListener('mouseleave', () => {
+                console.log('windows');
+                if (!isModalVisible) { 
+                    modal.show();       
+                    isModalVisible = true;
+                }
+            });
+            
+            modal._element.addEventListener('hidden.bs.modal', () => {
+                isModalVisible = false;
+            });
+            
+            document.addEventListener('mouseenter', () => {
+                if (isModalVisible) {
+                    updateSessionOut(); 
+                    leaveCount++;
+                    updateLeaveCount();   
+                    isModalVisible = false;
+                }
+            });
         }
     });
 
@@ -242,10 +235,9 @@
     }
 
     function onLoadPage() {
-
         if (numberParam) {
             $.ajax({
-                url: '{{ config('app.url') }}/number-of-exam?id=1&number=' + numberParam,
+                url: '{{ config('app.url') }}/number-of-exam?id=1&number=' + numberParam+ '&user_id={{Session::get('user_id')}}',
                 method: "GET",
                 success: function(response) {
                     
@@ -254,7 +246,6 @@
                     if (myData) {
                         let questionHtml = '';
 
-                        // Cek tipe soal dan tentukan konten HTML
                         if (myData.type == 'multiple') {
                             console.log('multiple');
                             fetchQuestion('multiple');
@@ -264,12 +255,10 @@
                             fetchQuestion('complex');
                             questionHtml = $('#complex-template').html();
                         } else if (myData.type == 'essay') {
-                            console.log('essay');
                             fetchQuestion('essay');
                             questionHtml = $('#essay-template').html();
                         }
 
-                        // Gunakan parameter numberParam di dalam konten template, jika diperlukan
                         if (questionHtml) {
                             $('#question_id').html('<div class="question-box">' + questionHtml + '</div>');
                         }
@@ -281,9 +270,9 @@
 
                         questions.forEach(function (question) {
                             if(numberParam == question.number_of){
-                                questionListHtml += `<a href="?number=${question.number_of}" class="btn btn-outline-primary m-1 active">${question.number_of}</a>`;
+                                questionListHtml += `<a href="?number=${question.number_of}" class="btn btn-outline-primary m-1 halaman active">${question.number_of}</a>`;
                             }else{
-                                questionListHtml += `<a href="?number=${question.number_of}" class="btn btn-outline-primary m-1">${question.number_of}</a>`;
+                                questionListHtml += `<a href="?number=${question.number_of}" class="btn btn-outline-primary halaman m-1">${question.number_of}</a>`;
                             }
                         });
 
@@ -302,86 +291,117 @@
     }
 
     async function fetchQuestion(type) {
-        try {
-            const numberParam = getUrlParameter('number'); 
+    try {
+        const numberParam = getUrlParameter('number');
 
-            if (!numberParam) {
-                console.error("No 'number' parameter found in the URL.");
-                return;
-            }
-
-            const response = await fetch(`{{ config('app.url') }}/question-user?number=${numberParam}`);
-            
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            
-            const questionTextElement = document.getElementById('question-text');
-            
-            // Set teks pertanyaan
-            questionTextElement.textContent = data.question;
-
-            // Loop melalui opsi dan buat radio buttons
-            if(type == 'multiple'){
-                const optionsContainer = document.getElementById('options-container');
-                optionsContainer.innerHTML = '';
-
-                data.options.forEach(option => {
-                    const optionDiv = document.createElement('div');
-                    optionDiv.classList.add('form-check');
-    
-                    const radioInput = document.createElement('input');
-                    radioInput.classList.add('form-check-input');
-                    radioInput.type = 'radio';
-                    radioInput.name = 'jawaban';
-                    radioInput.id = `jawaban-${option.id}`;
-                    radioInput.value = option.id;
-    
-                    const label = document.createElement('label');
-                    label.classList.add('form-check-label');
-                    label.setAttribute('for', `jawaban-${option.id}`);
-                    label.textContent = option.text;
-    
-                    optionDiv.appendChild(radioInput);
-                    optionDiv.appendChild(label);
-    
-                    optionsContainer.appendChild(optionDiv);
-                });
-            }else if(type == 'complex'){
-                const optionsContainer = document.getElementById('options-container');
-                optionsContainer.innerHTML = '';
-                data.options.forEach(option => {
-                    const optionDiv = document.createElement('div');
-                    optionDiv.classList.add('form-check');
-    
-                    const radioInput = document.createElement('input');
-                    radioInput.classList.add('form-check-input');
-                    radioInput.type = 'checkbox';
-                    radioInput.name = 'jawaban';
-                    radioInput.id = `jawaban-${option.id}`;
-                    radioInput.value = option.id;
-    
-                    const label = document.createElement('label');
-                    label.classList.add('form-check-label');
-                    label.setAttribute('for', `jawaban-${option.id}`);
-                    label.textContent = option.text;
-    
-                    optionDiv.appendChild(radioInput);
-                    optionDiv.appendChild(label);
-    
-                    optionsContainer.appendChild(optionDiv);
-                });
-            }else if(type == 'essay'){
-                
-            }
-        } catch (error) {
-            console.error('Error fetching question data:', error);
+        
+        if (!numberParam) {
+            console.error("No 'number' parameter found in the URL.");
+            return;
         }
-    }
+        
+        const response = await fetch('{{ config('app.url') }}/question-user?number=' + numberParam + '&user_id={{Session::get('user_id')}}');
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        const questionTextElement = document.getElementById('question-text');
+        questionTextElement.textContent = data.question;
+                        
+        if (type === 'multiple') {
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
 
+            data.options.forEach(option => {
+                const optionDiv = document.createElement('div');
+                optionDiv.classList.add('form-check');
+
+                const radioInput = document.createElement('input');
+                radioInput.classList.add('form-check-input');
+                radioInput.type = 'radio';
+                radioInput.name = 'jawaban';
+                radioInput.id = `jawaban-${option.id}`;
+                radioInput.value = option.id;
+
+                if (data.answer.some(answer => answer.option_id === option.id)) {
+                    radioInput.checked = true;
+                }
+
+                const label = document.createElement('label');
+                label.classList.add('form-check-label');
+                label.setAttribute('for', `jawaban-${option.id}`);
+                label.textContent = option.text;
+
+                optionDiv.appendChild(radioInput);
+                optionDiv.appendChild(label);
+                optionsContainer.appendChild(optionDiv);
+            });
+        } else if (type === 'complex') {
+            const optionsContainer = document.getElementById('options-container');
+            optionsContainer.innerHTML = '';
+            data.options.forEach(option => {
+                const optionDiv = document.createElement('div');
+                optionDiv.classList.add('form-check');
+
+                const checkboxInput = document.createElement('input');
+                checkboxInput.classList.add('form-check-input');
+                checkboxInput.type = 'checkbox';
+                checkboxInput.name = 'jawaban';
+                checkboxInput.id = `jawaban-${option.id}`;
+                checkboxInput.value = option.id;
+
+                if (data.answer.some(answer => answer.option_id === option.id)) {
+                    checkboxInput.checked = true;
+                }
+
+                const label = document.createElement('label');
+                label.classList.add('form-check-label');
+                label.setAttribute('for', `jawaban-${option.id}`);
+                label.textContent = option.text;
+
+                optionDiv.appendChild(checkboxInput);
+                optionDiv.appendChild(label);
+                optionsContainer.appendChild(optionDiv);
+            });
+        } else if (type === 'essay') {
+            $('#jawaban').val(data.answer);
+        }
+
+        
+
+    } catch (error) {
+        console.error('Error fetching question data:', error);
+    }
+}
+
+
+     function updateSessionOut() {
+            fetch('/update-session-on-exam', {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    console.log('Sesi berhasil diperbarui.');
+                } else {
+                    console.error('Gagal memperbarui sesi.');
+                }
+            })
+            .catch(error => {
+                console.error('Kesalahan saat memperbarui sesi:', error);
+            });
+        }
+
+        function updateLeaveCount() {
+            document.getElementById('leaveCount').textContent = leaveCount;
+        }
 </script>
 
 <script type="text/template" id="multiple-template">
