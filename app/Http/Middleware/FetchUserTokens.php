@@ -37,6 +37,6 @@ class FetchUserTokens
         }
 
         // Jika tidak ada token, kembalikan error atau redirect
-        return redirect('/login')->with('error', 'Session expired or token missing.');
+        return redirect('/login-page')->with('error', 'Session expired or token missing.');
     }
 }

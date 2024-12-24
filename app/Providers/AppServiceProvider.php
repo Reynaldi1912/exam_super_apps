@@ -29,11 +29,13 @@ class AppServiceProvider extends ServiceProvider
         // Mendapatkan session user_id
         // $url = 'http://localhost:7000';
         $url = 'http://192.168.10.167:7000';
+        $websocket = 'http://192.168.10.167:8080';
       
 
         // Menyimpan konfigurasi yang dibutuhkan
         config([
-            'app.url' => $url
+            'app.url' => $url,
+            'app.websocket' => $websocket
         ]);
     }
 }

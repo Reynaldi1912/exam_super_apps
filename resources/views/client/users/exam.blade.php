@@ -190,6 +190,7 @@
                 updateSessionOut();
                 leaveCount++;
                 updateLeaveCount();
+                sendWebSocket('{{Session::get('username')}}', '{{Session::get('user_id')}}', '{{Session::get('parent_id')}}', 'Hello, this is a test message!');
                 modal.show(); 
             });
     
@@ -221,6 +222,7 @@
                 if (isModalVisible) {
                     updateSessionOut(); 
                     leaveCount++;
+                    sendWebSocket('{{Session::get('username')}}', '{{Session::get('user_id')}}', '{{Session::get('parent_id')}}', 'Hello, this is a test message!');
                     updateLeaveCount();   
                     isModalVisible = false;
                 }
@@ -402,6 +404,33 @@
         function updateLeaveCount() {
             document.getElementById('leaveCount').textContent = leaveCount;
         }
+        function sendWebSocket(username, userId, targetUserId, message) {
+            const ws = new WebSocket('{{ config('app.websocket') }}');
+
+            ws.onopen = () => {
+                console.log('Connected to WebSocket server');
+
+                const payload = {
+                    user_id: userId, // ID pengirim
+                    target_user_id: targetUserId, // ID penerima
+                    username: username, // Nama pengguna pengirim
+                    message: message, // Pesan yang dikirim
+                    time: new Date().toLocaleTimeString() // Waktu pengiriman
+                };
+
+                console.log(`Sending message: ${JSON.stringify(payload)}`);
+                ws.send(JSON.stringify(payload)); // Kirim payload setelah koneksi terbuka
+            };
+
+            ws.onerror = (error) => {
+                console.error(`WebSocket Error: ${error}`);
+            };
+
+            ws.onclose = () => {
+                console.log('WebSocket connection closed');
+            };
+        }
+
 </script>
 
 <script type="text/template" id="multiple-template">

@@ -143,6 +143,20 @@
             </div>
         </div>
     </div>
+
+    <div class="col-lg-12">
+    <div class="card shadow mb-4">
+            <div class="card-header py-3">
+            <select name="" id="" class="form-control">
+                <option value="">UJIAN TENGAH SEMESTER - 
+                    <span id="examStatus">07:00 - 08:00 / 20 December 2024</span>
+                </option>
+            </select>
+        </div>
+        <div class="card-body">
+            <ul id="messageList" class="mt-3"></ul>
+        </div>
+    </div>
     
     <div class="col-lg-12 mb-4"  id="dashboardReminder" style="display: none;">
 
@@ -154,6 +168,8 @@
             </div>
         </div>
     </div>
+    </div>
+
 
 
 
@@ -181,6 +197,7 @@
     <script>           
             $(document).ready(function() {
                 loadDashboard();
+                listenWebSocket('{{Session::get('user_id')}}');
             });
 
             function loadDashboard(){
@@ -215,22 +232,9 @@
                             const examEndTime = new Date('2024-12-20T08:00:00');
                             const currentTime = new Date();
 
-                            const examStatusSpan = document.getElementById('examStatus');
                             const examStatusLabel = document.getElementById('examStatusLabel');
 
-                            if (currentTime < examStartTime) {
-                                examStatusSpan.classList.remove('text-warning', 'text-success');
-                                examStatusSpan.classList.add('text-danger');
-                                examStatusLabel.innerHTML = 'Not started yet';
-                            } else if (currentTime >= examStartTime && currentTime <= examEndTime) {
-                                examStatusSpan.classList.remove('text-danger', 'text-success');
-                                examStatusSpan.classList.add('text-warning');
-                                examStatusLabel.innerHTML = 'Running now';
-                            } else {
-                                examStatusSpan.classList.remove('text-danger', 'text-warning');
-                                examStatusSpan.classList.add('text-success');
-                                examStatusLabel.innerHTML = 'Done';
-                            }
+                       
 
                         } else {
                             // Hide the entire card if success is false
@@ -297,6 +301,45 @@
             
     </script>
 
-<script src="../sb-admin/vendor/chart.js/Chart.min.js"></script>
-<script src="../sb-admin/js/demo/chart-area-demo.js"></script>
-<script src="../sb-admin/js/demo/chart-pie-demo.js"></script>
+<script>
+    function listenWebSocket(userId) {
+        const ws = new WebSocket('{{ config('app.websocket') }}');
+
+        ws.onopen = () => {
+            console.log('Listening for messages on WebSocket server');
+        };
+
+        ws.onmessage = async (event) => {
+            const data = event.data;
+
+            try {
+                // Parsing data dari WebSocket
+                const payload = data instanceof Blob ? JSON.parse(await data.text()) : JSON.parse(data);
+
+                console.log('Received payload:', payload);
+
+                // Tampilkan pesan jika target_user_id cocok
+                if (payload.target_user_id === userId) {
+                    const messageList = document.getElementById('messageList');
+                    const newMessage = document.createElement('li');
+                    newMessage.textContent = `[${payload.time}] ${payload.message} - ${payload.username}`;
+                    messageList.appendChild(newMessage);
+                } else {
+                    console.log('Message ignored: Not for this user');
+                }
+            } catch (error) {
+                console.error('Error processing WebSocket message:', error);
+            }
+        };
+
+        ws.onerror = (error) => {
+            console.error(`WebSocket Error: ${error}`);
+        };
+
+        ws.onclose = () => {
+            console.log('WebSocket connection closed');
+        };
+    }
+
+
+</script>
