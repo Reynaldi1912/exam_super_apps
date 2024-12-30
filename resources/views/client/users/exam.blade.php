@@ -13,6 +13,10 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <style>
+        .toast.bg-custom {
+            background-color: #4caf50; /* Warna hijau kustom */
+            color: #fff; /* Teks putih */
+        }
         .screenshot-protect {
             position: fixed;
             top: 0;
@@ -119,11 +123,11 @@
 
                         <div class="d-flex justify-content-between align-items-center mt-4">
                             <!-- Tombol Previous -->
-                            <a class="btn btn-primary" id="prevPage">
+                            <a class="btn btn-primary" onclick="navigatePush(-1)" id="prevPage">
                                 <i class="fa fa-arrow-left"></i>
                             </a>
 
-                            <a class="btn btn-primary" id="nextPage">
+                            <a class="btn btn-primary"  onclick="navigatePush(1)" id="nextPage">
                                 <i class="fa fa-arrow-right"></i>
                             </a>
                         </div>
@@ -163,6 +167,19 @@
     </div>
 </div>
 
+<div class="toast-container position-fixed top-0 start-0 p-3">
+    <div id="toast" class="toast text-white" role="alert" aria-live="assertive" aria-atomic="true">
+        <div id="toast-header" class="toast-header text-white">
+            <strong class="me-auto" >Message</strong>
+            <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
+        </div>
+        <div id="toast-body" class="toast-body">
+            Pesan akan muncul di sini.
+        </div>
+    </div>
+</div>
+
+
 <script>
     const numberParam = parseInt(getUrlParameter('number')); 
     const leaveAudio = document.getElementById('leaveAudio'); 
@@ -176,8 +193,7 @@
         await onLoadPage();
         const encryptedId = '{{ $id }}'; 
         
-        document.querySelector('#nextPage').href = `/exam/${encryptedId}?number=${numberParam + 1}`;
-        document.querySelector('#prevPage').href = `/exam/${encryptedId}?number=${numberParam - 1}`;
+     
         let isAltPressed = false;
         let isPageNavigation = false; 
         const isMobile = window.innerWidth <= 768;
@@ -196,12 +212,6 @@
     
             window.addEventListener('focus', () => {
                 console.log('Pengguna kembali ke jendela browser.');
-            });
-    
-            document.querySelectorAll('#prevPage, #nextPage, .halaman').forEach(button => {
-                button.addEventListener('click', () => {
-                    isPageNavigation = true;
-                });
             });
         }
 
@@ -231,6 +241,9 @@
     });
 
 
+    function navigatePush(number){
+        saveAnswer(numberParam + (number));
+    }
     function getUrlParameter(name) {
         const urlParams = new URLSearchParams(window.location.search);
         return urlParams.get(name);
@@ -272,9 +285,9 @@
 
                         questions.forEach(function (question) {
                             if(numberParam == question.number_of){
-                                questionListHtml += `<a href="?number=${question.number_of}" class="btn btn-outline-primary m-1 halaman active">${question.number_of}</a>`;
+                                questionListHtml += `<a class="btn btn-outline-primary m-1 halaman active" onclick="saveAnswer(${question.number_of})">${question.number_of}</a>`;
                             }else{
-                                questionListHtml += `<a href="?number=${question.number_of}" class="btn btn-outline-primary halaman m-1">${question.number_of}</a>`;
+                                questionListHtml += `<a class="btn btn-outline-primary halaman m-1" onclick="saveAnswer(${question.number_of})">${question.number_of}</a>`;
                             }
                         });
 
@@ -293,91 +306,152 @@
     }
 
     async function fetchQuestion(type) {
-    try {
-        const numberParam = getUrlParameter('number');
+        try {
+            const numberParam = getUrlParameter('number');
 
-        
-        if (!numberParam) {
-            console.error("No 'number' parameter found in the URL.");
-            return;
+            
+            if (!numberParam) {
+                console.error("No 'number' parameter found in the URL.");
+                return;
+            }
+            
+            const response = await fetch('{{ config('app.url') }}/question-user?number=' + numberParam + '&user_id={{Session::get('user_id')}}');
+            
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            
+            const data = await response.json();
+            
+            const questionTextElement = document.getElementById('question-text');
+            questionTextElement.textContent = data.question;
+                            
+            if (type === 'multiple') {
+                const optionsContainer = document.getElementById('options-container');
+                optionsContainer.innerHTML = '';
+
+                data.options.forEach(option => {
+                    const optionDiv = document.createElement('div');
+                    optionDiv.classList.add('form-check');
+
+                    const radioInput = document.createElement('input');
+                    radioInput.classList.add('form-check-input');
+                    radioInput.type = 'radio';
+                    radioInput.name = 'jawaban';
+                    radioInput.id = `jawaban-${option.id}`;
+                    radioInput.value = option.id;
+
+                    if (data.answer.some(answer => answer.option_id === option.id)) {
+                        radioInput.checked = true;
+                    }
+
+                    const label = document.createElement('label');
+                    label.classList.add('form-check-label');
+                    label.setAttribute('for', `jawaban-${option.id}`);
+                    label.textContent = option.text;
+
+                    optionDiv.appendChild(radioInput);
+                    optionDiv.appendChild(label);
+                    optionsContainer.appendChild(optionDiv);
+                });
+            } else if (type === 'complex') {
+                const optionsContainer = document.getElementById('options-container');
+                optionsContainer.innerHTML = '';
+                data.options.forEach(option => {
+                    const optionDiv = document.createElement('div');
+                    optionDiv.classList.add('form-check');
+
+                    const checkboxInput = document.createElement('input');
+                    checkboxInput.classList.add('form-check-input');
+                    checkboxInput.type = 'checkbox';
+                    checkboxInput.name = 'jawaban';
+                    checkboxInput.id = `jawaban-${option.id}`;
+                    checkboxInput.value = option.id;
+
+                    if (data.answer.some(answer => answer.option_id === option.id)) {
+                        checkboxInput.checked = true;
+                    }
+
+                    const label = document.createElement('label');
+                    label.classList.add('form-check-label');
+                    label.setAttribute('for', `jawaban-${option.id}`);
+                    label.textContent = option.text;
+
+                    optionDiv.appendChild(checkboxInput);
+                    optionDiv.appendChild(label);
+                    optionsContainer.appendChild(optionDiv);
+                });
+            } else if (type === 'essay') {
+                $('#jawaban').val(data.answer);
+            }
+
+            
+
+        } catch (error) {
+            console.error('Error fetching question data:', error);
         }
-        
-        const response = await fetch('{{ config('app.url') }}/question-user?number=' + numberParam + '&user_id={{Session::get('user_id')}}');
-        
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        
-        const questionTextElement = document.getElementById('question-text');
-        questionTextElement.textContent = data.question;
-                        
-        if (type === 'multiple') {
-            const optionsContainer = document.getElementById('options-container');
-            optionsContainer.innerHTML = '';
-
-            data.options.forEach(option => {
-                const optionDiv = document.createElement('div');
-                optionDiv.classList.add('form-check');
-
-                const radioInput = document.createElement('input');
-                radioInput.classList.add('form-check-input');
-                radioInput.type = 'radio';
-                radioInput.name = 'jawaban';
-                radioInput.id = `jawaban-${option.id}`;
-                radioInput.value = option.id;
-
-                if (data.answer.some(answer => answer.option_id === option.id)) {
-                    radioInput.checked = true;
-                }
-
-                const label = document.createElement('label');
-                label.classList.add('form-check-label');
-                label.setAttribute('for', `jawaban-${option.id}`);
-                label.textContent = option.text;
-
-                optionDiv.appendChild(radioInput);
-                optionDiv.appendChild(label);
-                optionsContainer.appendChild(optionDiv);
-            });
-        } else if (type === 'complex') {
-            const optionsContainer = document.getElementById('options-container');
-            optionsContainer.innerHTML = '';
-            data.options.forEach(option => {
-                const optionDiv = document.createElement('div');
-                optionDiv.classList.add('form-check');
-
-                const checkboxInput = document.createElement('input');
-                checkboxInput.classList.add('form-check-input');
-                checkboxInput.type = 'checkbox';
-                checkboxInput.name = 'jawaban';
-                checkboxInput.id = `jawaban-${option.id}`;
-                checkboxInput.value = option.id;
-
-                if (data.answer.some(answer => answer.option_id === option.id)) {
-                    checkboxInput.checked = true;
-                }
-
-                const label = document.createElement('label');
-                label.classList.add('form-check-label');
-                label.setAttribute('for', `jawaban-${option.id}`);
-                label.textContent = option.text;
-
-                optionDiv.appendChild(checkboxInput);
-                optionDiv.appendChild(label);
-                optionsContainer.appendChild(optionDiv);
-            });
-        } else if (type === 'essay') {
-            $('#jawaban').val(data.answer);
-        }
-
-        
-
-    } catch (error) {
-        console.error('Error fetching question data:', error);
     }
+
+    function saveAnswer(number) {
+    console.log('Menyimpan jawaban...');
+
+    const toast = new bootstrap.Toast(document.getElementById('toast'));
+    const toastBody = document.getElementById('toast-body');
+    const toastHeader = document.getElementById('toast-header');
+
+    // Data jawaban yang akan dikirim
+    const data = {
+        question_number: number,
+        answer: "contoh jawaban", // Ganti dengan data jawaban aktual
+    };
+
+    // Kirim data menggunakan fetch
+    fetch('/save-answer', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+    })
+        .then((response) => {
+            if (!response.ok) {
+                throw new Error('Gagal menyimpan jawaban!');
+            }
+            return response.json();
+        })
+        .then((result) => {
+            // Jika berhasil
+            toastBody.classList.remove('bg-danger');
+            toastHeader.classList.add('bg-secondary');
+            toastBody.classList.add('bg-success');
+            toastBody.innerHTML = `Jawaban berhasil disimpan. Pindah ke soal nomor ${number}.`;
+            toast.show();
+
+            // Redirect setelah delay
+            setTimeout(() => {
+                window.location.href = `?number=${number}`;
+            }, 1000);
+        })
+        .catch((error) => {
+            // Jika gagal
+            console.error(error);
+            toastBody.classList.remove('bg-success');
+            toastHeader.classList.add('bg-secondary');
+            toastBody.classList.add('bg-danger');
+            toastBody.innerHTML = `
+                Gagal menyimpan jawaban. Klik lanjutkan tidak akan menyimpan data
+                <br>
+                <button class="btn btn-sm btn-success text-white mt-2" id="continue" style="font-size:10px;">Lanjutkan</button>
+            `;
+            toast.show();
+
+            document.getElementById('continue').addEventListener('click', () => {
+                toast.hide();
+                window.location.href = `?number=${number}`; // Lanjutkan meskipun gagal
+            });
+        });
 }
+
 
 
      function updateSessionOut() {

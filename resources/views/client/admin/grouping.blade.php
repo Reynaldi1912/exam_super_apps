@@ -4,6 +4,9 @@
 @php
   $menus_name = 'Groupings'
 @endphp
+<div class="col-xl-12 text-right mb-3">
+    <button class="btn btn-success text" data-toggle="modal" data-target="#addGrouping"> Add Grouping</button>
+</div>
 <div class="container-fluid">
   <!-- Table -->
   <table class="table table-striped" id="groupingsTable">
@@ -20,6 +23,36 @@
     </tbody>
   </table>
 
+
+  <div class="modal fade" id="addGrouping" tabindex="-1" role="dialog" aria-labelledby="addQuestionBankModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addQuestionBankModalLabel">Add Question Bank</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="addQuestionBankForm">
+          @csrf
+          <div class="form-group">
+            <label for="bankName">Nama Bank Soal</label>
+            <input type="text" class="form-control" id="bankName" name="name" placeholder="Enter bank name" required>
+          </div>
+          <div class="form-group">
+            <label for="description">Description</label>
+            <textarea class="form-control" id="description" name="description" rows="3" placeholder="Enter description"></textarea>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" onclick="saveQuestionBank()">Save</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
   <!-- Edit Modal -->
   <div class="modal fade" id="editModal" tabindex="-1" aria-labelledby="editModalLabel" aria-hidden="true">
     <div class="modal-dialog">
@@ -31,7 +64,7 @@
         <div class="modal-body">
           <form id="editClassForm">
             <div class="mb-3">
-              <label for="className" class="form-label">Class Name</label>
+              <label for="className" class="form-label">Name</label>
               <input type="text" class="form-control" id="className" required>
             </div>
             <div class="mb-3">

@@ -4,6 +4,9 @@
 @php
   $menus_name = 'Exams'
 @endphp
+<div class="col-xl-12 text-right mb-3">
+    <button class="btn btn-success text"> Add Exam</button>
+</div>
 <table class="table table-striped"  id="groupingsTable">
   <thead>
     <tr>
@@ -24,6 +27,45 @@
 
 
 
+
+<!-- Add Exam Modal -->
+<div class="modal fade" id="addExamModal" tabindex="-1" role="dialog" aria-labelledby="addExamModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addExamModalLabel">Add Exam</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="addExamForm">
+          @csrf
+          <div class="form-group">
+            <label for="addExamName">Exam Name</label>
+            <input type="text" class="form-control" id="addExamName" name="name" placeholder="Enter exam name" required>
+          </div>
+          <div class="form-group">
+            <label for="addExamDate">Exam Date</label>
+            <input type="date" class="form-control" id="addExamDate" name="date" required>
+          </div>
+          <div class="form-group">
+            <label for="addStartTime">Start Time</label>
+            <input type="time" class="form-control" id="addStartTime" name="start_time" required>
+          </div>
+          <div class="form-group">
+            <label for="addEndTime">End Time</label>
+            <input type="time" class="form-control" id="addEndTime" name="end_time" required>
+          </div>
+        </form>
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="saveNewExam()">Save Exam</button>
+      </div>
+    </div>
+  </div>
+</div>
 <!-- Edit Exam Modal -->
 <div class="modal fade" id="editExamModal" tabindex="-1" role="dialog" aria-labelledby="editExamModalLabel" aria-hidden="true">
   <div class="modal-dialog" role="document">
@@ -56,7 +98,7 @@
          
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-            <button type="submit" class="btn btn-primary">Save Changes</button>
+            <button type="button" class="btn btn-primary" onclick="saveExam()">Save Changes</button>
           </div>
         </form>
       </div>
@@ -82,6 +124,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="saveGroupings()">Save</button>
       </div>
     </div>
   </div>
@@ -104,6 +147,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+        <button type="button" class="btn btn-primary" onclick="saveExcludedUsers()">Save</button>
       </div>
     </div>
   </div>
@@ -131,6 +175,34 @@
 
 
 <script>
+    $(document).on('click', '.btn-success', function () {
+      $('#addExamModal').modal('show');
+    });
+
+  function saveNewExam() {
+    const data = {
+      name: $('#addExamName').val(),
+      date: $('#addExamDate').val(),
+      start_time: $('#addStartTime').val(),
+      end_time: $('#addEndTime').val()
+    };
+
+    $.ajax({
+      url: '/create-exam', // Adjust the endpoint as per your routes
+      type: 'POST',
+      headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+      data,
+      success: function (response) {
+        alert('Exam added successfully!');
+        $('#addExamModal').modal('hide');
+        $('#addExamForm')[0].reset(); // Reset form
+        loadTable(); // Reload table data
+      },
+      error: function (xhr) {
+        alert('Failed to add exam. Please try again.');
+      }
+    });
+  }
   function loadTable(){
     $.ajax({
         url: `{{ config('app.url') }}/exams?userId=`+'{{Session::get('user_id')}}', // Endpoint to fetch groupings
@@ -329,6 +401,67 @@
         });
     }
 
+    function saveExam() {
+      const examId = $('#editExamId').val();
+      const data = {
+        name: $('#examName').val(),
+        date: $('#examDate').val(),
+        start_time: $('#startTime').val(),
+        end_time: $('#endTime').val()
+      };
+
+      $.ajax({
+        url: `/update-exam/${examId}`,
+        type: 'POST',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        data,
+        success: function () {
+          alert('Exam updated successfully!');
+          location.reload();
+        },
+        error: function () {
+          alert('Failed to update exam.');
+        }
+      });
+    }
+
+    function saveGroupings() {
+      const examId = $('#manageGroupingModal').data('exam-id');
+      const selectedGroupings = $('#listGrouping').val();
+
+      $.ajax({
+        url: `/update-groupings/${examId}`,
+        type: 'POST',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        data: { groupings: selectedGroupings },
+        success: function () {
+          alert('Groupings updated successfully!');
+          location.reload();
+        },
+        error: function () {
+          alert('Failed to update groupings.');
+        }
+      });
+    }
+
+    function saveExcludedUsers() {
+      const examId = $('#exceptUsersModal').data('exam-id');
+      const excludedUsers = $('#listUser').val();
+
+      $.ajax({
+        url: `/update-excluded-users/${examId}`,
+        type: 'POST',
+        headers: { 'X-CSRF-TOKEN': '{{ csrf_token() }}' },
+        data: { excluded_users: excludedUsers },
+        success: function () {
+          alert('Excluded users updated successfully!');
+          location.reload();
+        },
+        error: function () {
+          alert('Failed to update excluded users.');
+        }
+      });
+    }
 </script>
 @endsection
 

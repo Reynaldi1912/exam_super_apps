@@ -5,6 +5,9 @@
   $menus_name = 'Users'
 @endphp
 <!-- Table -->
+<div class="col-xl-12 text-right mb-3">
+    <button class="btn btn-success text" data-toggle="modal" data-target="#addUser"> Add User</button>
+</div>
 <table class="table table-striped" id="usersTable">
   <thead>
     <tr>
@@ -34,15 +37,15 @@
         <form id="editUserForm">
           <div class="form-group">
             <label for="username">Username</label>
-            <input type="text" class="form-control" id="username" placeholder="Enter username">
+            <input type="text" class="form-control" id="username_edit" placeholder="Enter username">
           </div>
           <div class="form-group">
             <label for="password">Password</label>
-            <input type="password" class="form-control" id="password" placeholder="Enter password">
+            <input type="password" class="form-control" id="password_edit" placeholder="Enter password">
           </div>
           <div class="form-group">
             <label for="grouping">Grouping</label>
-            <select class="form-control" id="listGrouping">
+            <select class="form-control listGrouping" id="listGrouping_edit">
          
             </select>
           </div>
@@ -58,6 +61,42 @@
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
         <button type="button" class="btn btn-primary" id="saveChangesButton">Save Changes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="addUser" tabindex="-1" role="dialog" aria-labelledby="addQuestionBankModalLabel" aria-hidden="true">
+  <div class="modal-dialog" role="document">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="addQuestionBankModalLabel">Add User</h5>
+        <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+      <div class="modal-body">
+        <form id="addQuestionBankForm">
+          @csrf
+          <div class="form-group">
+            <label for="bankName">Username</label>
+            <input type="text" class="form-control" id="username_add" name="name" placeholder="Enter Username" required>
+          </div>
+          <div class="form-group">
+            <label for="grouping">Grouping</label>
+            <select class="form-control listGrouping" id="listGrouping_add">
+         
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="grouping">Passowrd</label>
+            <input type="text" class="form-control" id="password_add" name="name" placeholder="Enter Password" required>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+            <button type="button" class="btn btn-primary" onclick="saveQuestionBank()">Save</button>
+          </div>
+        </form>
       </div>
     </div>
   </div>
@@ -205,7 +244,7 @@
   }
 
   function loadGroupings() {
-      const selectElement = $('#listGrouping');
+      const selectElement = $('.listGrouping');
 
         $.ajax({
             url: `{{ config('app.url') }}/groupings?userId=`+'{{Session::get('user_id')}}',
