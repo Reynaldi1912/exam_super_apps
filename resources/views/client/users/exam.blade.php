@@ -330,7 +330,8 @@
                 const optionsContainer = document.getElementById('options-container');
                 optionsContainer.innerHTML = '';
 
-                data.options.forEach(option => {
+                
+                data.options.forEach(option => {                                        
                     const optionDiv = document.createElement('div');
                     optionDiv.classList.add('form-check');
 
@@ -355,9 +356,11 @@
                     optionsContainer.appendChild(optionDiv);
                 });
             } else if (type === 'complex') {
+                
                 const optionsContainer = document.getElementById('options-container');
                 optionsContainer.innerHTML = '';
                 data.options.forEach(option => {
+                    console.log(option.answer);
                     const optionDiv = document.createElement('div');
                     optionDiv.classList.add('form-check');
 
