@@ -255,6 +255,7 @@
                 url: '{{ config('app.url') }}/number-of-exam?id=1&number=' + numberParam+ '&user_id={{Session::get('user_id')}}',
                 method: "GET",
                 success: function(response) {
+                                        
                     
                     const myData = response.data.find(item => item.number_of == numberParam);
 
@@ -317,12 +318,16 @@
             
             const response = await fetch('{{ config('app.url') }}/question-user?number=' + numberParam + '&user_id={{Session::get('user_id')}}');
             
+            
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
             const data = await response.json();
             
+            console.log(data.id);
+            question_id = data.id;
+                        
             const questionTextElement = document.getElementById('question-text');
             questionTextElement.textContent = data.question;
                             
@@ -338,7 +343,7 @@
                     const radioInput = document.createElement('input');
                     radioInput.classList.add('form-check-input');
                     radioInput.type = 'radio';
-                    radioInput.name = 'jawaban';
+                    radioInput.name = 'jawaban[]';
                     radioInput.id = `jawaban-${option.id}`;
                     radioInput.value = option.id;
 
@@ -367,7 +372,7 @@
                     const checkboxInput = document.createElement('input');
                     checkboxInput.classList.add('form-check-input');
                     checkboxInput.type = 'checkbox';
-                    checkboxInput.name = 'jawaban';
+                    checkboxInput.name = 'jawaban[]';
                     checkboxInput.id = `jawaban-${option.id}`;
                     checkboxInput.value = option.id;
 
@@ -401,28 +406,26 @@
     const toast = new bootstrap.Toast(document.getElementById('toast'));
     const toastBody = document.getElementById('toast-body');
     const toastHeader = document.getElementById('toast-header');
+    const jawabanElements = document.getElementsByName('jawaban[]');
+    const checkedValues = Array.from(jawabanElements)
+        .filter(input => input.checked) // Hanya elemen yang checked
+        .map(input => input.value)     // Ambil nilai value
+        .join(",");                    // Gabungkan menjadi string
+
+        
 
     // Data jawaban yang akan dikirim
     const data = {
-        question_number: number,
-        answer: "contoh jawaban", // Ganti dengan data jawaban aktual
+        question_id: question_id,
+        answer: checkedValues, // Ganti dengan data jawaban aktual
+        user_id: '{{Session::get('user_id')}}', // Ganti dengan data jawaban aktual
     };
 
-    // Kirim data menggunakan fetch
-    fetch('/save-answer', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-    })
-        .then((response) => {
-            if (!response.ok) {
-                throw new Error('Gagal menyimpan jawaban!');
-            }
-            return response.json();
-        })
-        .then((result) => {
+    $.ajax({
+        url: '{{ config('app.url') }}/save-answer', // URL tujuan
+        type: 'POST', // Metode HTTP
+        data: data, // Data yang dikirimkan
+        success: function (result) {
             // Jika berhasil
             toastBody.classList.remove('bg-danger');
             toastHeader.classList.add('bg-secondary');
@@ -434,8 +437,8 @@
             setTimeout(() => {
                 window.location.href = `?number=${number}`;
             }, 1000);
-        })
-        .catch((error) => {
+        },
+        error: function (xhr, status, error) {
             // Jika gagal
             console.error(error);
             toastBody.classList.remove('bg-success');
@@ -448,11 +451,14 @@
             `;
             toast.show();
 
-            document.getElementById('continue').addEventListener('click', () => {
+            // Event listener untuk tombol "Lanjutkan"
+            $(document).on('click', '#continue', function () {
                 toast.hide();
                 window.location.href = `?number=${number}`; // Lanjutkan meskipun gagal
             });
-        });
+        }
+    });
+
 }
 
 
