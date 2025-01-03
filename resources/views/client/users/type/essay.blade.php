@@ -3,7 +3,7 @@
 
 <!-- Pilihan Jawaban -->
 <div id="essay-container">
-    <textarea name="" class="form-control" id="jawaban"></textarea>
+    <textarea name="essay" class="form-control" id="jawaban"></textarea>
 </div>
 
 @include('client.users.type.pagination')

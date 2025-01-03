@@ -187,6 +187,7 @@
     const countdownElement = document.getElementById('countdown'); 
     let isModalVisible = false;
     let leaveCount = '{{Session::get('out')}}';
+    let answer_option = null;
 
     $(document).ready(async function() {
         document.querySelector('#nomorSoal').textContent = numberParam;
@@ -323,9 +324,7 @@
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
-            const data = await response.json();
-            
-            console.log(data.id);
+            const data = await response.json();            
             question_id = data.id;
                         
             const questionTextElement = document.getElementById('question-text');
@@ -347,9 +346,18 @@
                     radioInput.id = `jawaban-${option.id}`;
                     radioInput.value = option.id;
 
-                    if (data.answer.some(answer => answer.option_id === option.id)) {
-                        radioInput.checked = true;
+                    if (data.answer != null) {
+                        data.answer.forEach(answer => {
+                            if (answer.option_id === option.id) {
+                                radioInput.checked = true;
+                                if (answer_option) {
+                                    answer_option += ','; 
+                                }
+                                answer_option += answer.option_id;
+                            }
+                        });
                     }
+
 
                     const label = document.createElement('label');
                     label.classList.add('form-check-label');
@@ -376,8 +384,16 @@
                     checkboxInput.id = `jawaban-${option.id}`;
                     checkboxInput.value = option.id;
 
-                    if (data.answer.some(answer => answer.option_id === option.id)) {
-                        checkboxInput.checked = true;
+                    if (data.answer != null) {
+                        data.answer.forEach(answer => {
+                            if (answer.option_id === option.id) {
+                                checkboxInput.checked = true;
+                                if (answer_option) {
+                                    answer_option += ','; 
+                                }
+                                answer_option += answer.option_id;
+                            }
+                        });
                     }
 
                     const label = document.createElement('label');
@@ -392,9 +408,7 @@
             } else if (type === 'essay') {
                 $('#jawaban').val(data.answer);
             }
-
             
-
         } catch (error) {
             console.error('Error fetching question data:', error);
         }
@@ -407,12 +421,14 @@
     const toastBody = document.getElementById('toast-body');
     const toastHeader = document.getElementById('toast-header');
     const jawabanElements = document.getElementsByName('jawaban[]');
+    const essayElements = document.getElementsByName('essay');
     const checkedValues = Array.from(jawabanElements)
         .filter(input => input.checked) // Hanya elemen yang checked
         .map(input => input.value)     // Ambil nilai value
         .join(",");                    // Gabungkan menjadi string
 
-        
+    console.log( essayElements.value);
+    
 
     // Data jawaban yang akan dikirim
     const data = {
@@ -420,44 +436,59 @@
         answer: checkedValues, // Ganti dengan data jawaban aktual
         user_id: '{{Session::get('user_id')}}', // Ganti dengan data jawaban aktual
     };
+    
+    if(answer_option != checkedValues){
 
-    $.ajax({
-        url: '{{ config('app.url') }}/save-answer', // URL tujuan
-        type: 'POST', // Metode HTTP
-        data: data, // Data yang dikirimkan
-        success: function (result) {
-            // Jika berhasil
-            toastBody.classList.remove('bg-danger');
-            toastHeader.classList.add('bg-secondary');
-            toastBody.classList.add('bg-success');
-            toastBody.innerHTML = `Jawaban berhasil disimpan. Pindah ke soal nomor ${number}.`;
-            toast.show();
+        $.ajax({
+            url: '{{ config('app.url') }}/save-answer', // URL tujuan
+            type: 'POST', // Metode HTTP
+            data: data, // Data yang dikirimkan
+            success: function (result) {
+                // Jika berhasil
+                toastBody.classList.remove('bg-danger');
+                toastHeader.classList.add('bg-secondary');
+                toastBody.classList.add('bg-success');
+                toastBody.innerHTML = result.message;
+                toast.show();
+    
+                // Redirect setelah delay
+                setTimeout(() => {
+                    window.location.href = `?number=${number}`;
+                }, 1000);
+            },
+            error: function (xhr, status, error) {
+                // Jika gagal
+                console.error(error);
+                toastBody.classList.remove('bg-success');
+                toastHeader.classList.add('bg-secondary');
+                toastBody.classList.add('bg-danger');
+                toastBody.innerHTML = `
+                    Gagal Simpan, Klik next untuk lanjut 
+                    <br>
+                    <button class="btn btn-sm btn-success text-white mt-2" id="continue" style="font-size:10px;">Next</button>
+                `;
+                toast.show();
+    
+                // Event listener untuk tombol "Lanjutkan"
+                $(document).on('click', '#continue', function () {
+                    toast.hide();
+                    window.location.href = `?number=${number}`; // Lanjutkan meskipun gagal
+                });
+            }
+        });
+    }else{
+        toastBody.classList.remove('bg-danger');
+        toastHeader.classList.add('bg-secondary');
+        toastBody.classList.add('bg-success');
+        toastBody.innerHTML = "Tidak ada perubahan";
+        toast.show();
 
-            // Redirect setelah delay
-            setTimeout(() => {
-                window.location.href = `?number=${number}`;
-            }, 1000);
-        },
-        error: function (xhr, status, error) {
-            // Jika gagal
-            console.error(error);
-            toastBody.classList.remove('bg-success');
-            toastHeader.classList.add('bg-secondary');
-            toastBody.classList.add('bg-danger');
-            toastBody.innerHTML = `
-                Gagal menyimpan jawaban. Klik lanjutkan tidak akan menyimpan data
-                <br>
-                <button class="btn btn-sm btn-success text-white mt-2" id="continue" style="font-size:10px;">Lanjutkan</button>
-            `;
-            toast.show();
-
-            // Event listener untuk tombol "Lanjutkan"
-            $(document).on('click', '#continue', function () {
-                toast.hide();
-                window.location.href = `?number=${number}`; // Lanjutkan meskipun gagal
-            });
-        }
-    });
+        // Redirect setelah delay
+        setTimeout(() => {
+            window.location.href = `?number=${number}`;
+        }, 1000);
+    
+    }
 
 }
 
@@ -501,7 +532,7 @@
                     time: new Date().toLocaleTimeString() // Waktu pengiriman
                 };
 
-                console.log(`Sending message: ${JSON.stringify(payload)}`);
+                // console.log(`Sending message: ${JSON.stringify(payload)}`);
                 ws.send(JSON.stringify(payload)); // Kirim payload setelah koneksi terbuka
             };
 
