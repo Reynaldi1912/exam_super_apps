@@ -622,61 +622,44 @@
         essay: essayElements,
     };
 
-    
-    
-    if((answer_option && answer_option != checkedValues) || (essayElements && String(essayElements) != String(essay_answer))){
 
-        $.ajax({
-            url: '{{ config('app.url') }}/save-answer', // URL tujuan
-            type: 'POST',
-            data: data,
-            success: function (result) {
-                // Jika berhasil
-                toastBody.classList.remove('bg-danger');
-                toastHeader.classList.add('bg-success');
-                toastBody.classList.add('bg-success');
-                toastBody.innerHTML = result.message;
-                toast.show();
-    
-                // Redirect setelah delay
-                setTimeout(() => {
-                    window.location.href = `?number=${number}`;
-                }, 100);
-            },
-            error: function (xhr, status, error) {
-                // Jika gagal
-                console.error(error);
-                toastBody.classList.remove('bg-success');
-                toastHeader.classList.add('bg-danger');
-                toastBody.classList.add('bg-danger');
-                toastBody.innerHTML = `
-                    Gagal Simpan, Klik next untuk lanjut 
-                    <br>
-                    <button class="btn btn-sm btn-primary text-white mt-2" id="continue" style="font-size:10px;">Next</button>
-                `;
-                toast.show();
-    
-                // Event listener untuk tombol "Lanjutkan"
-                $(document).on('click', '#continue', function () {
-                    toast.hide();
-                    window.location.href = `?number=${number}`; // Lanjutkan meskipun gagal
-                });
-            }
-        });
-    }else{
-        toastBody.classList.remove('bg-danger');
-        toastHeader.classList.add('bg-success');
-        toastBody.classList.add('bg-success');
-        toastBody.innerHTML = "Tidak ada perubahan";
-        toast.show();
+    $.ajax({
+        url: '{{ config('app.url') }}/save-answer', // URL tujuan
+        type: 'POST',
+        data: data,
+        success: function (result) {
+            // Jika berhasil
+            toastBody.classList.remove('bg-danger');
+            toastHeader.classList.add('bg-success');
+            toastBody.classList.add('bg-success');
+            toastBody.innerHTML = result.message;
+            toast.show();
 
-        // Redirect setelah delay
-        setTimeout(() => {
-            window.location.href = `?number=${number}`;
-        }, 100);
-    
-    }
+            // Redirect setelah delay
+            setTimeout(() => {
+                window.location.href = `?number=${number}`;
+            }, 100);
+        },
+        error: function (xhr, status, error) {
+            // Jika gagal
+            console.error(error);
+            toastBody.classList.remove('bg-success');
+            toastHeader.classList.add('bg-danger');
+            toastBody.classList.add('bg-danger');
+            toastBody.innerHTML = `
+                Gagal Simpan, Klik next untuk lanjut 
+                <br>
+                <button class="btn btn-sm btn-primary text-white mt-2" id="continue" style="font-size:10px;">Next</button>
+            `;
+            toast.show();
 
+            // Event listener untuk tombol "Lanjutkan"
+            $(document).on('click', '#continue', function () {
+                toast.hide();
+                window.location.href = `?number=${number}`; // Lanjutkan meskipun gagal
+            });
+        }
+    });
 }
 
 function displayQuestions() {
