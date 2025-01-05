@@ -13,6 +13,54 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <style>
+         .question-container {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+        .question-item {
+            background: #f4f4f4;
+            border: 1px solid #ccc;
+            padding: 10px;
+            border-radius: 5px;
+        }
+        .answer-dropzone {
+            background: #e9ecef;
+            border: 2px dashed #6c757d;
+            border-radius: 5px;
+            min-height: 50px;
+            padding: 10px;
+            margin-top: 10px;
+            text-align: center;
+            cursor: pointer;
+        }
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: white;
+            border-radius: 10px;
+            width: 90%;
+            max-width: 400px;
+            padding: 20px;
+            text-align: center;
+        }
+        .modal-option {
+            background: #d4edda;
+            border: 1px solid #28a745;
+            padding: 10px;
+            margin: 5px 0;
+            border-radius: 5px;
+            cursor: pointer;
+        }
         .toast.bg-custom {
             background-color: #4caf50; /* Warna hijau kustom */
             color: #fff; /* Teks putih */
@@ -137,8 +185,10 @@
                     <!-- Navigation Section -->
                     <div class="col-md-4 pt-3">
                         <h6>Nomor Soal</h6>
+                        
+
+                        
                         <div class="question-nav d-flex flex-wrap" id="question-list">
-                                           
                         </div>
                         
                     </div>
@@ -167,6 +217,15 @@
     </div>
 </div>
 
+<div id="modal" class="modal-overlay">
+    <div class="modal-content">
+        <h2>Pilih Jawaban</h2>
+        <div id="modalOptions"></div>
+        <br>    
+        <button onclick="closeModal()">Tutup</button>
+    </div>
+</div>
+
 <div class="toast-container position-fixed top-0 start-0 p-3">
     <div id="toast" class="toast text-white" role="alert" aria-live="assertive" aria-atomic="true">
         <div id="toast-header" class="toast-header text-white">
@@ -188,9 +247,35 @@
     let isModalVisible = false;
     let leaveCount = '{{Session::get('out')}}';
     let answer_option = null;
+    let essay_answer = null;
+    let container = null;
+
+
+    const data = {
+            questions: [
+                { id: 6, question: "Indonesia" },
+                { id: 7, question: "Jepang" },
+                { id: 8, question: "Prancis" }
+            ],
+            options: [
+                { id: 6, option: "Kota Jakarta" },
+                { id: 7, option: "Kota Tokyo Shibuya" },
+                { id: 8, option: "Paris" }
+            ],
+            answers: {
+                6: 6, 
+                7: 7,
+                8: null 
+            }
+        };
+
+    let selectedDropzone = null;
+    let answers = { ...data.answers };
+
 
     $(document).ready(async function() {
         document.querySelector('#nomorSoal').textContent = numberParam;
+
         await onLoadPage();
         const encryptedId = '{{ $id }}'; 
         
@@ -239,8 +324,90 @@
                 }
             });
         }
+
     });
 
+
+    
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+        return array;
+    }
+    function openModal(questionId) {
+    console.log('test');
+    
+    selectedDropzone = document.querySelector(`.answer-dropzone[data-id="${questionId}"]`);
+    const modalOptions = document.getElementById('modalOptions');
+    modalOptions.innerHTML = '';
+
+    const shuffledOptions = shuffleArray([...data.options]);
+    shuffledOptions.forEach((option) => {
+        const optionElement = document.createElement('div');
+        optionElement.classList.add('option');
+        optionElement.textContent = option.option;
+        optionElement.onclick = () => selectAnswer(questionId, option.id);
+        
+        // Apply styles directly to the div
+        optionElement.style.padding = '15px';
+        optionElement.style.marginBottom = '8px';
+        optionElement.style.borderBottom = '1px solid #ddd';
+        optionElement.style.borderRadius = '8px';
+        optionElement.style.cursor = 'pointer';
+        optionElement.style.backgroundColor = '#f9f9f9';
+        optionElement.style.transition = 'background-color 0.3s, transform 0.2s';
+        
+        // Hover effect
+        optionElement.onmouseover = function() {
+            optionElement.style.backgroundColor = '#f1f1f1';
+            optionElement.style.transform = 'scale(1.05)';
+        };
+        optionElement.onmouseout = function() {
+            optionElement.style.backgroundColor = '#f9f9f9';
+            optionElement.style.transform = 'scale(1)';
+        };
+
+        modalOptions.appendChild(optionElement);
+    });
+
+    document.getElementById('modal').style.display = 'flex';
+}
+
+
+    function selectAnswer(questionId, optionId) {
+        console.log('select');
+        
+        if (selectedDropzone) {
+            selectedDropzone.textContent = data.options.find((opt) => opt.id === optionId).option;
+            answers[questionId] = optionId;
+        }
+        closeModal();
+    }
+
+    function closeModal() {
+        document.getElementById('modal').style.display = 'none';
+    }
+
+    function saveAnswers() {
+        const questionIds = Object.keys(answers).join(',');
+        const answerIds = Object.values(answers).join(',');
+
+        const payload = {
+            question: questionIds,
+            answer: answerIds
+        };
+
+        console.log(payload);
+
+        // Contoh pengiriman POST
+        // fetch('/save-answers', {
+        //     method: 'POST',
+        //     headers: { 'Content-Type': 'application/json' },
+        //     body: JSON.stringify(payload)
+        // });
+    }
 
     function navigatePush(number){
         saveAnswer(numberParam + (number));
@@ -274,6 +441,10 @@
                         } else if (myData.type == 'essay') {
                             fetchQuestion('essay');
                             questionHtml = $('#essay-template').html();
+                        } else if (myData.type == 'match') {
+                            fetchQuestion('match');
+                            console.log(myData.type);
+                            questionHtml = $('#match-template').html();
                         }
 
                         if (questionHtml) {
@@ -320,41 +491,44 @@
             const response = await fetch('{{ config('app.url') }}/question-user?number=' + numberParam + '&user_id={{Session::get('user_id')}}');
             
             
+            
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             
             const data = await response.json();            
             question_id = data.id;
-                        
+            
             const questionTextElement = document.getElementById('question-text');
             questionTextElement.textContent = data.question;
-                            
+            
             if (type === 'multiple') {
                 const optionsContainer = document.getElementById('options-container');
                 optionsContainer.innerHTML = '';
-
+                
                 
                 data.options.forEach(option => {                                        
                     const optionDiv = document.createElement('div');
                     optionDiv.classList.add('form-check');
-
+                    
                     const radioInput = document.createElement('input');
                     radioInput.classList.add('form-check-input');
                     radioInput.type = 'radio';
                     radioInput.name = 'jawaban[]';
                     radioInput.id = `jawaban-${option.id}`;
                     radioInput.value = option.id;
-
+                    
+                    if (option.id) {
+                        answer_option += ','; 
+                    }
+                    answer_option += option.id;
+                    
                     if (data.answer != null) {
                         data.answer.forEach(answer => {
                             if (answer.option_id === option.id) {
+                                
                                 radioInput.checked = true;
-                                if (answer_option) {
-                                    answer_option += ','; 
-                                }
-                                answer_option += answer.option_id;
-                            }
+                            }                            
                         });
                     }
 
@@ -373,6 +547,10 @@
                 const optionsContainer = document.getElementById('options-container');
                 optionsContainer.innerHTML = '';
                 data.options.forEach(option => {
+                    if (answer_option) {
+                        answer_option += ','; 
+                    }
+                    answer_option += option.id;
                     console.log(option.answer);
                     const optionDiv = document.createElement('div');
                     optionDiv.classList.add('form-check');
@@ -388,11 +566,11 @@
                         data.answer.forEach(answer => {
                             if (answer.option_id === option.id) {
                                 checkboxInput.checked = true;
-                                if (answer_option) {
-                                    answer_option += ','; 
-                                }
-                                answer_option += answer.option_id;
                             }
+                            if (answer_option) {
+                                answer_option += ','; 
+                            }
+                            answer_option += answer.option_id;
                         });
                     }
 
@@ -406,7 +584,11 @@
                     optionsContainer.appendChild(optionDiv);
                 });
             } else if (type === 'essay') {
-                $('#jawaban').val(data.answer);
+                $('#essay').val(data.answer);
+                essay_answer = data.answer;
+            } else if (type == 'match'){
+                displayQuestions();
+
             }
             
         } catch (error) {
@@ -416,37 +598,42 @@
 
     function saveAnswer(number) {
     console.log('Menyimpan jawaban...');
+    saveAnswers();
+
+    // return false;
 
     const toast = new bootstrap.Toast(document.getElementById('toast'));
     const toastBody = document.getElementById('toast-body');
     const toastHeader = document.getElementById('toast-header');
     const jawabanElements = document.getElementsByName('jawaban[]');
-    const essayElements = document.getElementsByName('essay');
+    const essayElements = document.getElementById('essay')?.value ?? null;
+
     const checkedValues = Array.from(jawabanElements)
         .filter(input => input.checked) // Hanya elemen yang checked
         .map(input => input.value)     // Ambil nilai value
-        .join(",");                    // Gabungkan menjadi string
+        .join(",");   
+                             // Gabungkan menjadi string
 
-    console.log( essayElements.value);
     
-
-    // Data jawaban yang akan dikirim
     const data = {
         question_id: question_id,
         answer: checkedValues, // Ganti dengan data jawaban aktual
-        user_id: '{{Session::get('user_id')}}', // Ganti dengan data jawaban aktual
+        user_id: '{{Session::get('user_id')}}', // Ganti dengan data jawaban aktual,
+        essay: essayElements,
     };
+
     
-    if(answer_option != checkedValues){
+    
+    if((answer_option && answer_option != checkedValues) || (essayElements && String(essayElements) != String(essay_answer))){
 
         $.ajax({
             url: '{{ config('app.url') }}/save-answer', // URL tujuan
-            type: 'POST', // Metode HTTP
-            data: data, // Data yang dikirimkan
+            type: 'POST',
+            data: data,
             success: function (result) {
                 // Jika berhasil
                 toastBody.classList.remove('bg-danger');
-                toastHeader.classList.add('bg-secondary');
+                toastHeader.classList.add('bg-success');
                 toastBody.classList.add('bg-success');
                 toastBody.innerHTML = result.message;
                 toast.show();
@@ -454,18 +641,18 @@
                 // Redirect setelah delay
                 setTimeout(() => {
                     window.location.href = `?number=${number}`;
-                }, 1000);
+                }, 100);
             },
             error: function (xhr, status, error) {
                 // Jika gagal
                 console.error(error);
                 toastBody.classList.remove('bg-success');
-                toastHeader.classList.add('bg-secondary');
+                toastHeader.classList.add('bg-danger');
                 toastBody.classList.add('bg-danger');
                 toastBody.innerHTML = `
                     Gagal Simpan, Klik next untuk lanjut 
                     <br>
-                    <button class="btn btn-sm btn-success text-white mt-2" id="continue" style="font-size:10px;">Next</button>
+                    <button class="btn btn-sm btn-primary text-white mt-2" id="continue" style="font-size:10px;">Next</button>
                 `;
                 toast.show();
     
@@ -478,7 +665,7 @@
         });
     }else{
         toastBody.classList.remove('bg-danger');
-        toastHeader.classList.add('bg-secondary');
+        toastHeader.classList.add('bg-success');
         toastBody.classList.add('bg-success');
         toastBody.innerHTML = "Tidak ada perubahan";
         toast.show();
@@ -486,11 +673,48 @@
         // Redirect setelah delay
         setTimeout(() => {
             window.location.href = `?number=${number}`;
-        }, 1000);
+        }, 100);
     
     }
 
 }
+
+function displayQuestions() {
+    const container = document.getElementById('questionContainer');
+    console.log(container);
+    
+    if (!container) {
+        console.error('Container element with ID "questionContainer" not found.');
+        return;
+    }
+
+    if (!data || !data.questions || data.questions.length === 0) {
+        console.error('No questions found in data.');
+        return;
+    }
+
+    console.log('Questions:', data.questions);
+    data.questions.forEach((question) => {
+        const questionElement = document.createElement('div');
+        questionElement.classList.add('question-item');
+
+        const answerId = answers[question.id];
+
+        const answerText = answerId
+            ? data.options.find((option) => option.id === answerId)?.option
+            : 'Klik untuk memilih';
+
+        container.innerHTML += `
+            <div class="question-item">
+                <p>${question.question}</p>
+                <div class="answer-dropzone" data-id="${question.id}" onclick="openModal(${question.id})">${answerText}</div>
+            </div>
+        `;
+    });
+
+    console.log('Questions rendered successfully.');
+}
+
 
 
 
@@ -564,6 +788,13 @@
     @include('client.users.type.essay')
     </div>
 </script>
+<script type="text/template" id="match-template">
+    <div>
+    @include('client.users.type.match')
+    </div>
+</script>
+
+
 
 
 
