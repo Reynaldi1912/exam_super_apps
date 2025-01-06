@@ -250,27 +250,27 @@
     let essay_answer = null;
     let container = null;
 
+    const url = new URL(window.location.href);
+    const number = url.searchParams.get('number');
+    let questions_first = null;
+    let questions_second = null;
+    let data = null;
+    let answers = null;
+    let type = null;
+    // Menggunakan async/await untuk mendapatkan data
+    (async function() {
+        try {
+            data = await fetchData();
 
-    const data = {
-            questions: [
-                { id: 6, question: "Indonesia" },
-                { id: 7, question: "Jepang" },
-                { id: 8, question: "Prancis" }
-            ],
-            options: [
-                { id: 6, option: "Kota Jakarta" },
-                { id: 7, option: "Kota Tokyo Shibuya" },
-                { id: 8, option: "Paris" }
-            ],
-            answers: {
-                6: 6, 
-                7: 7,
-                8: null 
-            }
-        };
+            type = data.type;
+            // Mengakses answers setelah data diperoleh
+            answers = { ...data.answers };
 
-    let selectedDropzone = null;
-    let answers = { ...data.answers };
+            // Tempatkan kode lain yang membutuhkan `data` atau `answers` di sini
+        } catch (error) {
+            console.error("Error fetching data:", error);
+        }
+    })();
 
 
     $(document).ready(async function() {
@@ -292,7 +292,7 @@
                 updateSessionOut();
                 leaveCount++;
                 updateLeaveCount();
-                sendWebSocket('{{Session::get('username')}}', '{{Session::get('user_id')}}', '{{Session::get('parent_id')}}', 'Hello, this is a test message!');
+                sendWebSocket('{{Session::get('username')}}', '{{Session::get('user_id')}}', '{{Session::get('parent_id')}}', 'Detected Out From Exam Page!');
                 modal.show(); 
             });
     
@@ -328,7 +328,44 @@
     });
 
 
-    
+    function fetchData() {
+        const url = new URL(window.location.href);
+        const number = url.searchParams.get('number');
+
+        return new Promise((resolve, reject) => {
+            $.ajax({
+                url: '{{ config('app.url') }}/question-user',
+                type: 'GET',
+                data: {
+                    number: number,
+                    user_id: '{{ Session::get("user_id") }}'
+                },
+                success: function(response) {
+                    const type = response.type;
+                    const questions_first = response.match_question;
+                    const questions_second = response.option_second;
+
+                    data = {
+                        questions: questions_first,
+                        options: questions_second,
+                        answers: {
+                            7: 7,
+                            8: null,
+                            9: 9,
+                        },
+                        type : type,
+                    };
+
+                    resolve(data ); // Resolving the Promise
+                },
+                error: function(xhr, status, error) {
+                    console.error("Error:", error);
+                    reject(error); // Rejecting the Promise
+                }
+            });
+        });
+    }
+
     function shuffleArray(array) {
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
@@ -391,22 +428,18 @@
     }
 
     function saveAnswers() {
+        // Mengambil semua key dan value dari objek `answers`
         const questionIds = Object.keys(answers).join(',');
-        const answerIds = Object.values(answers).join(',');
+        const answerIds = Object.values(answers)
+            .map((answer) => (answer === null ? 'null' : answer)) // Ganti undefined atau kosong dengan 'null'
+            .join(',');
 
         const payload = {
             question: questionIds,
             answer: answerIds
         };
 
-        console.log(payload);
-
-        // Contoh pengiriman POST
-        // fetch('/save-answers', {
-        //     method: 'POST',
-        //     headers: { 'Content-Type': 'application/json' },
-        //     body: JSON.stringify(payload)
-        // });
+        return payload;
     }
 
     function navigatePush(number){
@@ -495,7 +528,7 @@
             if (!response.ok) {
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
-            
+                        
             const data = await response.json();            
             question_id = data.id;
             
@@ -598,9 +631,12 @@
 
     function saveAnswer(number) {
     console.log('Menyimpan jawaban...');
-    saveAnswers();
+    let matchPayload = null;
+    if(type == 'match'){
+        matchPayload = saveAnswers();
+    }
+    
 
-    // return false;
 
     const toast = new bootstrap.Toast(document.getElementById('toast'));
     const toastBody = document.getElementById('toast-body');
@@ -612,17 +648,22 @@
         .filter(input => input.checked) // Hanya elemen yang checked
         .map(input => input.value)     // Ambil nilai value
         .join(",");   
-                             // Gabungkan menjadi string
+                            
 
     
-    const data = {
-        question_id: question_id,
-        answer: checkedValues, // Ganti dengan data jawaban aktual
-        user_id: '{{Session::get('user_id')}}', // Ganti dengan data jawaban aktual,
-        essay: essayElements,
-    };
+       const data = {
+            question_id: question_id,
+            answer: checkedValues, // Data jawaban awal
+            user_id: '{{Session::get('user_id')}}', // ID pengguna
+            essay: essayElements, // Data essay
+        };
 
+        if (type === 'match') {
+            delete data.answer;
+            data.answer = matchPayload['answer'];
+        }
 
+        
     $.ajax({
         url: '{{ config('app.url') }}/save-answer', // URL tujuan
         type: 'POST',
