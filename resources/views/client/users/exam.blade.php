@@ -171,14 +171,22 @@
 
                         <div class="d-flex justify-content-between align-items-center mt-4">
                             <!-- Tombol Previous -->
-                            <a class="btn btn-primary" onclick="navigatePush(-1)" id="prevPage">
-                                <i class="fa fa-arrow-left"></i>
-                            </a>
+                            <button class="btn btn-primary" onclick="navigatePush(-1)" id="prevPage" aria-label="Previous Page">
+                                <i class="fa fa-arrow-left" aria-hidden="true"></i>
+                            </button>
 
-                            <a class="btn btn-primary"  onclick="navigatePush(1)" id="nextPage">
-                                <i class="fa fa-arrow-right"></i>
-                            </a>
+                            <!-- Checkbox untuk Ragu -->
+                            <div class="form-check">
+                                <input type="checkbox" class="form-check-input" id="doubt">
+                                <label class="form-check-label" for="doubt">Ragu</label>
+                            </div>
+
+                            <!-- Tombol Next -->
+                            <button class="btn btn-primary" onclick="navigatePush(1)" id="nextPage" aria-label="Next Page">
+                                <i class="fa fa-arrow-right" aria-hidden="true"></i>
+                            </button>
                         </div>
+
                     </div>
                   
 
@@ -318,7 +326,7 @@
                 if (isModalVisible) {
                     updateSessionOut(); 
                     leaveCount++;
-                    sendWebSocket('{{Session::get('username')}}', '{{Session::get('user_id')}}', '{{Session::get('parent_id')}}', 'Hello, this is a test message!');
+                    sendWebSocket('{{Session::get('username')}}', '{{Session::get('user_id')}}', '{{Session::get('parent_id')}}', 'Detected Out From Exam Page!');
                     updateLeaveCount();   
                     isModalVisible = false;
                 }
@@ -341,21 +349,15 @@
                     user_id: '{{ Session::get("user_id") }}'
                 },
                 success: function(response) {
-                    const type = response.type;
-                    const questions_first = response.match_question;
-                    const questions_second = response.option_second;
-
                     data = {
-                        questions: questions_first,
-                        options: questions_second,
-                        answers: {
-                            7: 7,
-                            8: null,
-                            9: 9,
-                        },
-                        type : type,
+                        questions: response.match_question,
+                        options: response.option_second,
+                        answers: response.match_answer,
+                        type : response.type,
                     };
 
+                    console.log(data);
+                    
                     resolve(data ); // Resolving the Promise
                 },
                 error: function(xhr, status, error) {
@@ -428,10 +430,21 @@
     }
 
     function saveAnswers() {
-        // Mengambil semua key dan value dari objek `answers`
+    // Periksa apakah semua nilai dalam `answers` adalah null
+        const allNull = Object.values(answers).every((answer) => answer === null);
+
+        if (allNull) {
+            const payload = {
+                question: null,
+                answer: null
+            };
+            return payload; // Jika semua null, langsung return null
+        }
+
+        // Jika tidak semua null, buat payload seperti biasa
         const questionIds = Object.keys(answers).join(',');
         const answerIds = Object.values(answers)
-            .map((answer) => (answer === null ? 'null' : answer)) // Ganti undefined atau kosong dengan 'null'
+            .map((answer) => (answer === null ? 'null' : answer)) // Ganti null dengan 'null'
             .join(',');
 
         const payload = {
@@ -441,6 +454,7 @@
 
         return payload;
     }
+
 
     function navigatePush(number){
         saveAnswer(numberParam + (number));
@@ -455,8 +469,7 @@
             $.ajax({
                 url: '{{ config('app.url') }}/number-of-exam?id=1&number=' + numberParam+ '&user_id={{Session::get('user_id')}}',
                 method: "GET",
-                success: function(response) {
-                                        
+                success: function(response) {                    
                     
                     const myData = response.data.find(item => item.number_of == numberParam);
 
@@ -493,7 +506,13 @@
                             if(numberParam == question.number_of){
                                 questionListHtml += `<a class="btn btn-outline-primary m-1 halaman active" onclick="saveAnswer(${question.number_of})">${question.number_of}</a>`;
                             }else{
-                                questionListHtml += `<a class="btn btn-outline-primary halaman m-1" onclick="saveAnswer(${question.number_of})">${question.number_of}</a>`;
+                                if(question.status == 1){
+                                    questionListHtml += `<a class="btn btn-success halaman m-1" onclick="saveAnswer(${question.number_of})">${question.number_of}</a>`;
+                                }else if(question.status == -1){
+                                    questionListHtml += `<a class="btn btn-warning halaman m-1" onclick="saveAnswer(${question.number_of})">${question.number_of}</a>`;
+                                }else{
+                                    questionListHtml += `<a class="btn btn-outline-primary halaman m-1" onclick="saveAnswer(${question.number_of})">${question.number_of}</a>`;
+                                }
                             }
                         });
 
@@ -529,7 +548,7 @@
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
                         
-            const data = await response.json();            
+            const data = await response.json();
             question_id = data.id;
             
             const questionTextElement = document.getElementById('question-text');
@@ -540,7 +559,7 @@
                 optionsContainer.innerHTML = '';
                 
                 
-                data.options.forEach(option => {                                        
+                data.options.forEach(option => {
                     const optionDiv = document.createElement('div');
                     optionDiv.classList.add('form-check');
                     
@@ -643,6 +662,7 @@
     const toastHeader = document.getElementById('toast-header');
     const jawabanElements = document.getElementsByName('jawaban[]');
     const essayElements = document.getElementById('essay')?.value ?? null;
+    const doubt = document.getElementById('doubt').checked ? 1 : 0;
 
     const checkedValues = Array.from(jawabanElements)
         .filter(input => input.checked) // Hanya elemen yang checked
@@ -651,18 +671,18 @@
                             
 
     
-       const data = {
-            question_id: question_id,
-            answer: checkedValues, // Data jawaban awal
-            user_id: '{{Session::get('user_id')}}', // ID pengguna
-            essay: essayElements, // Data essay
+        const data = {
+            question_id: question_id, // ID pertanyaan
+            answer: checkedValues ? checkedValues : null, // Jika checkedValues tidak undefined/kosong, gunakan nilainya; jika tidak, null
+            user_id: '{{Session::get('user_id')}}', // ID pengguna dari session
+            essay: essayElements ? essayElements : null,
+            doubt: doubt, // Jika essayElements tidak undefined/kosong, gunakan nilainya; jika tidak, null
         };
-
+        
         if (type === 'match') {
             delete data.answer;
             data.answer = matchPayload['answer'];
         }
-
         
     $.ajax({
         url: '{{ config('app.url') }}/save-answer', // URL tujuan
