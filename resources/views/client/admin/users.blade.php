@@ -60,7 +60,7 @@
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary" id="saveChangesButton">Save Changes</button>
+        <button type="button" class="btn btn-primary" onclick="saveUpdateButton()">Save Changes</button>
       </div>
     </div>
   </div>
@@ -94,7 +94,7 @@
           </div>
           <div class="modal-footer">
             <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-            <button type="button" class="btn btn-primary" onclick="saveQuestionBank()">Save</button>
+            <button type="button" class="btn btn-primary" onclick="saveChangesButton()">Save</button>
           </div>
         </form>
       </div>
@@ -137,8 +137,8 @@
 
     loadUsers();
     window.openEditModal = function(id, username, grouping, status) {
-      $('#username').val(username);
-      $('#grouping').val(grouping);
+      $('#username_edit').val(username);
+      $('#grouping_edit').val(grouping);
       $('#statusSwitch').prop('checked', status === 'Active');
       $('#editModal').data('id', id); // Store the user ID in the modal
       $('#editModal').modal('show');
@@ -153,55 +153,91 @@
 
 
   
-    // Save Changes for Edit Modal
-    $('#saveChangesButton').on('click', function () {
+    function saveChangesButton(){
       var userId = $('#editModal').data('id');
-      var username = $('#username').val();
-      var password = $('#password').val();
-      var grouping = $('#grouping').val();
+      var username = $('#username_add').val();
+      var password = $('#password_add').val();
+      var grouping = $('#listGrouping_add').val();
       var status = $('#statusSwitch').prop('checked') ? 'Active' : 'Inactive';
 
-      $.ajax({
-        url: '/update-user/' + userId,
-        method: 'POST',
-        data: {
-          _token: '{{ csrf_token() }}',
+      data = {
+        _token: '{{ csrf_token() }}',
           username: username,
           password: password,
           grouping: grouping,
-          status: status
-        },
+          user_id_session : '{{Session::get('user_id')}}'
+      };
+
+      
+      $.ajax({
+        url: '{{ config('app.url') }}/insert-user',
+        method: 'POST',
+        data: data,
         success: function (response) {
           alert('User updated successfully!');
           $('#editModal').modal('hide');
-          location.reload(); // Reload the page to reflect changes
+          location.reload(); 
         },
         error: function (error) {
           alert('Error updating user.');
         }
       });
-    });
+    }
+
+    function saveUpdateButton(){
+      var userId = $('#editModal').data('id');
+      var username = $('#username_edit').val();
+      var password = $('#password_edit').val();
+      var grouping = $('#listGrouping_edit').val();
+      var status = $('#statusSwitch').prop('checked') ? 1 : 0;
+
+      data = {
+          user_id : userId,
+          _token: '{{ csrf_token() }}',
+          username: username,
+          password: password,
+          grouping: grouping,
+          user_id_session : '{{Session::get('user_id')}}',
+          status : status
+      };
+      
+      $.ajax({
+        url: '{{ config('app.url') }}/update-user',
+        method: 'POST',
+        data: data,
+        success: function (response) {
+          alert('User updated successfully!');
+          $('#editModal').modal('hide');
+          location.reload(); 
+        },
+        error: function (error) {
+          alert('Error updating user.');
+        }
+      });
+    }
 
     // Confirm Delete User
     $('#deleteUserButton').on('click', function () {
-      var userId = $('#deleteModal').data('id');
+    var userId = $('#deleteModal').data('id'); // Ambil ID user dari modal
 
-      $.ajax({
-        url: '/delete-user/' + userId, // Delete URL with the user ID
-        method: 'POST',
+    $.ajax({
+        url: '{{ config('app.url') }}/delete-user', // URL endpoint untuk delete user
+        method: 'POST', // Gunakan POST (atau DELETE jika server mendukungnya)
         data: {
-          _token: '{{ csrf_token() }}'
+            _token: '{{ csrf_token() }}', // CSRF token untuk keamanan
+            user_id: userId // ID user yang akan dihapus
         },
         success: function (response) {
-          alert('User deleted successfully!');
-          $('#deleteModal').modal('hide');
-          location.reload(); // Reload the page to reflect changes
+            alert('User deleted successfully!');
+            $('#deleteModal').modal('hide'); // Tutup modal setelah sukses
+            location.reload(); // Reload halaman untuk melihat perubahan
         },
         error: function (error) {
-          alert('Error deleting user.');
+            alert('Error deleting user.');
         }
-      });
     });
+});
+
   function loadUsers() {
       $.ajax({
         url: `{{ config('app.url') }}/users-exam?userId=`+'{{Session::get('user_id')}}',
