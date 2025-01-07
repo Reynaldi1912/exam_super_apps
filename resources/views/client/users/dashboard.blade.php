@@ -162,7 +162,7 @@ function execute(){
             modal.modal('show');
         },
         error: function () {
-            alert('Failed to set exam session. Please try again.');
+            alert('Failed to set exam session. Please try again. ');
         }
     });
     confirmButton.attr('href', `/exam/${id_exam}?number=1`);

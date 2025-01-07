@@ -169,23 +169,8 @@
                             
                         </div>
 
-                        <div class="d-flex justify-content-between align-items-center mt-4">
+                        <div class="d-flex justify-content-between align-items-center mt-4"  id ="targetContainer">
                             <!-- Tombol Previous -->
-                            <button class="btn btn-primary" onclick="navigatePush(-1)" id="prevPage" aria-label="Previous Page">
-                                <i class="fa fa-arrow-left" aria-hidden="true"></i>
-                            </button>
-
-                            <!-- Checkbox untuk Ragu -->
-                            <div class="form-check">
-                                <input type="checkbox" class="form-check-input" id="doubt">
-                                <label class="form-check-label" for="doubt">Ragu</label>
-                            </div>
-
-                            <!-- Tombol Next -->
-                            <button class="btn btn-primary" onclick="navigatePush(1)" id="nextPage" aria-label="Next Page">
-                                <i class="fa fa-arrow-right" aria-hidden="true"></i>
-                            </button>
-                        </div>
 
                     </div>
                   
@@ -246,6 +231,25 @@
     </div>
 </div>
 
+<div class="modal fade" id="confirmModal" tabindex="-1" role="dialog" aria-labelledby="confirmModalLabel" aria-hidden="true">
+    <div class="modal-dialog" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="confirmModalLabel">Konfirmasi Akhiri Ujian</h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <p>Apakah Anda yakin ingin mengakhiri ujian?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">Batal</button>
+                <button type="button" class="btn btn-danger" id="confirmFinishBtn">Akhiri</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <script>
     const numberParam = parseInt(getUrlParameter('number')); 
@@ -257,7 +261,7 @@
     let answer_option = null;
     let essay_answer = null;
     let container = null;
-
+    
     const url = new URL(window.location.href);
     const number = url.searchParams.get('number');
     let questions_first = null;
@@ -265,36 +269,48 @@
     let data = null;
     let answers = null;
     let type = null;
-    // Menggunakan async/await untuk mendapatkan data
-    (async function() {
-        try {
-            data = await fetchData();
+    let total_page = null;    
 
-            type = data.type;
-            // Mengakses answers setelah data diperoleh
-            answers = { ...data.answers };
-
-            // Tempatkan kode lain yang membutuhkan `data` atau `answers` di sini
-        } catch (error) {
-            console.error("Error fetching data:", error);
-        }
-    })();
-
-
-    $(document).ready(async function() {
+     $(document).ready(async function() {
         document.querySelector('#nomorSoal').textContent = numberParam;
-
-        await onLoadPage();
-        const encryptedId = '{{ $id }}'; 
+        data = await fetchData();            
+        type = data.type;
+        total_page = data.total_page;
+        answers = { ...data.answers };
         
-     
+        await onLoadPage();
+        
+        const encryptedId = '{{ $id }}'; 
+        navigatePage(total_page);
+        checkSizeScreen();
+    });
+
+    function navigatePage(total_page){
+        const htmlContent = `
+        <button class="btn btn-primary" onclick="navigatePush(-1)" id="prevPage" aria-label="Previous Page" ${numberParam <= 1 ? 'disabled' : ''}>
+                <i class="fa fa-arrow-left" aria-hidden="true"></i>
+            </button>
+            
+            <!-- Checkbox untuk Ragu -->
+            <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="doubt">
+            <label class="form-check-label" for="doubt">Ragu</label>
+            </div>
+            
+            <!-- Tombol Next -->
+            <button class="btn btn-primary" onclick="navigatePush(1)" id="nextPage" ${numberParam >= total_page ? 'disabled' : ''} aria-label="Next Page">
+            <i class="fa fa-arrow-right" aria-hidden="true"></i>
+            </button>
+            `;
+            document.getElementById('targetContainer').innerHTML = htmlContent; // Ganti `targetContainer` dengan ID elemen target
+    }
+
+    function checkSizeScreen(){
         let isAltPressed = false;
         let isPageNavigation = false; 
         const isMobile = window.innerWidth <= 768;
-
-        
         if (isMobile) {
-            console.log('ismobile');
+            console.log('Mobile Screen');
             window.addEventListener('blur', () => {
                 console.log('Pengguna meninggalkan jendela browser.');
                 updateSessionOut();
@@ -311,7 +327,7 @@
 
         if (!isMobile) {
             document.addEventListener('mouseleave', () => {
-                console.log('windows');
+                console.log('Windows Screen');
                 if (!isModalVisible) { 
                     modal.show();       
                     isModalVisible = true;
@@ -332,9 +348,7 @@
                 }
             });
         }
-
-    });
-
+    }
 
     function fetchData() {
         const url = new URL(window.location.href);
@@ -354,9 +368,8 @@
                         options: response.option_second,
                         answers: response.match_answer,
                         type : response.type,
+                        total_page : response.total_page
                     };
-
-                    console.log(data);
                     
                     resolve(data ); // Resolving the Promise
                 },
@@ -376,48 +389,45 @@
         return array;
     }
     function openModal(questionId) {
-    console.log('test');
     
-    selectedDropzone = document.querySelector(`.answer-dropzone[data-id="${questionId}"]`);
-    const modalOptions = document.getElementById('modalOptions');
-    modalOptions.innerHTML = '';
+        selectedDropzone = document.querySelector(`.answer-dropzone[data-id="${questionId}"]`);
+        const modalOptions = document.getElementById('modalOptions');
+        modalOptions.innerHTML = '';
 
-    const shuffledOptions = shuffleArray([...data.options]);
-    shuffledOptions.forEach((option) => {
-        const optionElement = document.createElement('div');
-        optionElement.classList.add('option');
-        optionElement.textContent = option.option;
-        optionElement.onclick = () => selectAnswer(questionId, option.id);
-        
-        // Apply styles directly to the div
-        optionElement.style.padding = '15px';
-        optionElement.style.marginBottom = '8px';
-        optionElement.style.borderBottom = '1px solid #ddd';
-        optionElement.style.borderRadius = '8px';
-        optionElement.style.cursor = 'pointer';
-        optionElement.style.backgroundColor = '#f9f9f9';
-        optionElement.style.transition = 'background-color 0.3s, transform 0.2s';
-        
-        // Hover effect
-        optionElement.onmouseover = function() {
-            optionElement.style.backgroundColor = '#f1f1f1';
-            optionElement.style.transform = 'scale(1.05)';
-        };
-        optionElement.onmouseout = function() {
+        const shuffledOptions = shuffleArray([...data.options]);
+        shuffledOptions.forEach((option) => {
+            const optionElement = document.createElement('div');
+            optionElement.classList.add('option');
+            optionElement.textContent = option.option;
+            optionElement.onclick = () => selectAnswer(questionId, option.id);
+            
+            // Apply styles directly to the div
+            optionElement.style.padding = '15px';
+            optionElement.style.marginBottom = '8px';
+            optionElement.style.borderBottom = '1px solid #ddd';
+            optionElement.style.borderRadius = '8px';
+            optionElement.style.cursor = 'pointer';
             optionElement.style.backgroundColor = '#f9f9f9';
-            optionElement.style.transform = 'scale(1)';
-        };
+            optionElement.style.transition = 'background-color 0.3s, transform 0.2s';
+            
+            // Hover effect
+            optionElement.onmouseover = function() {
+                optionElement.style.backgroundColor = '#f1f1f1';
+                optionElement.style.transform = 'scale(1.05)';
+            };
+            optionElement.onmouseout = function() {
+                optionElement.style.backgroundColor = '#f9f9f9';
+                optionElement.style.transform = 'scale(1)';
+            };
 
-        modalOptions.appendChild(optionElement);
-    });
+            modalOptions.appendChild(optionElement);
+        });
 
-    document.getElementById('modal').style.display = 'flex';
-}
+        document.getElementById('modal').style.display = 'flex';
+    }
 
 
-    function selectAnswer(questionId, optionId) {
-        console.log('select');
-        
+    function selectAnswer(questionId, optionId) {        
         if (selectedDropzone) {
             selectedDropzone.textContent = data.options.find((opt) => opt.id === optionId).option;
             answers[questionId] = optionId;
@@ -430,7 +440,6 @@
     }
 
     function saveAnswers() {
-    // Periksa apakah semua nilai dalam `answers` adalah null
         const allNull = Object.values(answers).every((answer) => answer === null);
 
         if (allNull) {
@@ -464,7 +473,7 @@
         return urlParams.get(name);
     }
 
-    function onLoadPage() {
+    async function onLoadPage() {
         if (numberParam) {
             $.ajax({
                 url: '{{ config('app.url') }}/number-of-exam?id=1&number=' + numberParam+ '&user_id={{Session::get('user_id')}}',
@@ -501,8 +510,9 @@
                     if (response.success) {
                         let questions = response.data;
                         let questionListHtml = "";
-
+                        
                         questions.forEach(function (question) {
+                            
                             if(numberParam == question.number_of){
                                 questionListHtml += `<a class="btn btn-outline-primary m-1 halaman active" onclick="saveAnswer(${question.number_of})">${question.number_of}</a>`;
                             }else{
@@ -512,7 +522,10 @@
                                     questionListHtml += `<a class="btn btn-warning halaman m-1" onclick="saveAnswer(${question.number_of})">${question.number_of}</a>`;
                                 }else{
                                     questionListHtml += `<a class="btn btn-outline-primary halaman m-1" onclick="saveAnswer(${question.number_of})">${question.number_of}</a>`;
-                                }
+                                }                                
+                            }
+                            if(total_page == question.number_of){
+                                questionListHtml += `<a class="btn btn-danger halaman m-1" onclick="confirmFinishExam(`+{{Session::get('user_id')}}+` , 1);">Finish</a>`;
                             }
                         });
 
@@ -529,6 +542,55 @@
             console.log("No 'number' parameter found in the URL.");
         }
     }
+
+    function confirmFinishExam(user_id, exam_id) {
+        // Tampilkan modal konfirmasi
+        const modal = document.getElementById('confirmModal');
+        const confirmButton = document.getElementById('confirmFinishBtn');
+
+        // Pastikan modal dapat ditampilkan
+        modal.style.display = 'block';
+        modal.classList.add('show');
+
+        // Ketika tombol "Akhiri" di dalam modal diklik
+        confirmButton.onclick = function () {
+            finishExam(user_id, exam_id);
+            modal.style.display = 'none';
+        };
+    }
+
+    function finishExam(user_id, exam_id) {
+        // Panggil endpoint AJAX
+        $.ajax({
+            url: '{{ config('app.url') }}/finish',
+            type: 'POST',
+            data: {
+                user_id: user_id,
+                exam_id: exam_id
+            },
+            success: function (response) {
+                console.log('Ujian berhasil diakhiri:', response);
+                saveAnswer(number , 'finish');
+                window.location.href = '/';
+            },
+            error: function (xhr, status, error) {
+                console.error('Gagal mengakhiri ujian:', error);
+                alert('Terjadi kesalahan. Coba lagi nanti.');
+            }
+        });
+    }
+
+    // Event untuk menutup modal (jika ada klik di luar modal atau tombol tutup)
+    window.onclick = function (event) {
+        const modal = document.getElementById('confirmModal');
+        if (event.target === modal) {
+            modal.style.display = 'none';
+        }
+    };
+
+    document.querySelector('.close').onclick = function () {
+        document.getElementById('confirmModal').style.display = 'none';
+    };
 
     async function fetchQuestion(type) {
         try {
@@ -603,7 +665,6 @@
                         answer_option += ','; 
                     }
                     answer_option += option.id;
-                    console.log(option.answer);
                     const optionDiv = document.createElement('div');
                     optionDiv.classList.add('form-check');
 
@@ -648,170 +709,165 @@
         }
     }
 
-    function saveAnswer(number) {
-    console.log('Menyimpan jawaban...');
-    let matchPayload = null;
-    if(type == 'match'){
-        matchPayload = saveAnswers();
-    }
-    
-
-
-    const toast = new bootstrap.Toast(document.getElementById('toast'));
-    const toastBody = document.getElementById('toast-body');
-    const toastHeader = document.getElementById('toast-header');
-    const jawabanElements = document.getElementsByName('jawaban[]');
-    const essayElements = document.getElementById('essay')?.value ?? null;
-    const doubt = document.getElementById('doubt').checked ? 1 : 0;
-
-    const checkedValues = Array.from(jawabanElements)
-        .filter(input => input.checked) // Hanya elemen yang checked
-        .map(input => input.value)     // Ambil nilai value
-        .join(",");   
-                            
-
-    
-        const data = {
-            question_id: question_id, // ID pertanyaan
-            answer: checkedValues ? checkedValues : null, // Jika checkedValues tidak undefined/kosong, gunakan nilainya; jika tidak, null
-            user_id: '{{Session::get('user_id')}}', // ID pengguna dari session
-            essay: essayElements ? essayElements : null,
-            doubt: doubt, // Jika essayElements tidak undefined/kosong, gunakan nilainya; jika tidak, null
-        };
-        
-        if (type === 'match') {
-            delete data.answer;
-            data.answer = matchPayload['answer'];
+    function saveAnswer(number , finish = null) {
+        let matchPayload = null;
+        if(type == 'match'){
+            matchPayload = saveAnswers();
         }
         
-    $.ajax({
-        url: '{{ config('app.url') }}/save-answer', // URL tujuan
-        type: 'POST',
-        data: data,
-        success: function (result) {
-            // Jika berhasil
-            toastBody.classList.remove('bg-danger');
-            toastHeader.classList.add('bg-success');
-            toastBody.classList.add('bg-success');
-            toastBody.innerHTML = result.message;
-            toast.show();
 
-            // Redirect setelah delay
-            setTimeout(() => {
-                window.location.href = `?number=${number}`;
-            }, 100);
-        },
-        error: function (xhr, status, error) {
-            // Jika gagal
-            console.error(error);
-            toastBody.classList.remove('bg-success');
-            toastHeader.classList.add('bg-danger');
-            toastBody.classList.add('bg-danger');
-            toastBody.innerHTML = `
-                Gagal Simpan, Klik next untuk lanjut 
-                <br>
-                <button class="btn btn-sm btn-primary text-white mt-2" id="continue" style="font-size:10px;">Next</button>
+
+        const toast = new bootstrap.Toast(document.getElementById('toast'));
+        const toastBody = document.getElementById('toast-body');
+        const toastHeader = document.getElementById('toast-header');
+        const jawabanElements = document.getElementsByName('jawaban[]');
+        const essayElements = document.getElementById('essay')?.value ?? null;
+        const doubt = document.getElementById('doubt').checked ? 1 : 0;
+
+        const checkedValues = Array.from(jawabanElements)
+            .filter(input => input.checked) // Hanya elemen yang checked
+            .map(input => input.value)     // Ambil nilai value
+            .join(",");   
+                                
+
+        
+            const data = {
+                question_id: question_id, // ID pertanyaan
+                answer: checkedValues ? checkedValues : null, // Jika checkedValues tidak undefined/kosong, gunakan nilainya; jika tidak, null
+                user_id: '{{Session::get('user_id')}}', // ID pengguna dari session
+                essay: essayElements ? essayElements : null,
+                doubt: doubt, // Jika essayElements tidak undefined/kosong, gunakan nilainya; jika tidak, null
+            };
+            
+            if (type === 'match') {
+                delete data.answer;
+                data.answer = matchPayload['answer'];
+            }
+            
+        $.ajax({
+            url: '{{ config('app.url') }}/save-answer', // URL tujuan
+            type: 'POST',
+            data: data,
+            success: function (result) {
+                // Jika berhasil
+                toastBody.classList.remove('bg-danger');
+                toastHeader.classList.add('bg-success');
+                toastBody.classList.add('bg-success');
+                toastBody.innerHTML = result.message;
+                toast.show();
+
+                // Redirect setelah delay
+                if(!finish){
+                    setTimeout(() => {
+                        window.location.href = `?number=${number}`;
+                    }, 100);
+                }
+            },
+            error: function (xhr, status, error) {
+                // Jika gagal
+                console.error(error);
+                toastBody.classList.remove('bg-success');
+                toastHeader.classList.add('bg-danger');
+                toastBody.classList.add('bg-danger');
+                toastBody.innerHTML = `
+                    Gagal Simpan, Klik next untuk lanjut 
+                    <br>
+                    <button class="btn btn-sm btn-primary text-white mt-2" id="continue" style="font-size:10px;">Next</button>
+                `;
+                toast.show();
+
+                // Event listener untuk tombol "Lanjutkan"
+                $(document).on('click', '#continue', function () {
+                    toast.hide();
+                    window.location.href = `?number=${number}`; // Lanjutkan meskipun gagal
+                });
+            }
+        });
+    }
+
+    function displayQuestions() {
+        const container = document.getElementById('questionContainer');
+        
+        if (!container) {
+            console.error('Container element with ID "questionContainer" not found.');
+            return;
+        }
+
+        if (!data || !data.questions || data.questions.length === 0) {
+            console.error('No questions found in data.');
+            return;
+        }
+
+        data.questions.forEach((question) => {
+            const questionElement = document.createElement('div');
+            questionElement.classList.add('question-item');
+
+            const answerId = answers[question.id];
+
+            const answerText = answerId
+                ? data.options.find((option) => option.id === answerId)?.option
+                : 'Klik untuk memilih';
+
+            container.innerHTML += `
+                <div class="question-item">
+                    <p>${question.question}</p>
+                    <div class="answer-dropzone" data-id="${question.id}" onclick="openModal(${question.id})">${answerText}</div>
+                </div>
             `;
-            toast.show();
-
-            // Event listener untuk tombol "Lanjutkan"
-            $(document).on('click', '#continue', function () {
-                toast.hide();
-                window.location.href = `?number=${number}`; // Lanjutkan meskipun gagal
-            });
-        }
-    });
-}
-
-function displayQuestions() {
-    const container = document.getElementById('questionContainer');
-    console.log(container);
-    
-    if (!container) {
-        console.error('Container element with ID "questionContainer" not found.');
-        return;
+        });
     }
 
-    if (!data || !data.questions || data.questions.length === 0) {
-        console.error('No questions found in data.');
-        return;
+    function updateSessionOut() {
+        fetch('/update-session-on-exam', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRF-TOKEN': '{{ csrf_token() }}'
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                console.log('Sesi berhasil diperbarui.');
+            } else {
+                console.error('Gagal memperbarui sesi.');
+            }
+        })
+        .catch(error => {
+            console.error('Kesalahan saat memperbarui sesi:', error);
+        });
     }
 
-    console.log('Questions:', data.questions);
-    data.questions.forEach((question) => {
-        const questionElement = document.createElement('div');
-        questionElement.classList.add('question-item');
+    function updateLeaveCount() {
+        document.getElementById('leaveCount').textContent = leaveCount;
+    }
 
-        const answerId = answers[question.id];
+    function sendWebSocket(username, userId, targetUserId, message) {
+        const ws = new WebSocket('{{ config('app.websocket') }}');
 
-        const answerText = answerId
-            ? data.options.find((option) => option.id === answerId)?.option
-            : 'Klik untuk memilih';
+        ws.onopen = () => {
+            console.log('Connected to WebSocket server');
 
-        container.innerHTML += `
-            <div class="question-item">
-                <p>${question.question}</p>
-                <div class="answer-dropzone" data-id="${question.id}" onclick="openModal(${question.id})">${answerText}</div>
-            </div>
-        `;
-    });
-
-    console.log('Questions rendered successfully.');
-}
-
-
-
-
-     function updateSessionOut() {
-            fetch('/update-session-on-exam', {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                }
-            })
-            .then(response => response.json())
-            .then(data => {
-                if (data.success) {
-                    console.log('Sesi berhasil diperbarui.');
-                } else {
-                    console.error('Gagal memperbarui sesi.');
-                }
-            })
-            .catch(error => {
-                console.error('Kesalahan saat memperbarui sesi:', error);
-            });
-        }
-
-        function updateLeaveCount() {
-            document.getElementById('leaveCount').textContent = leaveCount;
-        }
-        function sendWebSocket(username, userId, targetUserId, message) {
-            const ws = new WebSocket('{{ config('app.websocket') }}');
-
-            ws.onopen = () => {
-                console.log('Connected to WebSocket server');
-
-                const payload = {
-                    user_id: userId, // ID pengirim
-                    target_user_id: targetUserId, // ID penerima
-                    username: username, // Nama pengguna pengirim
-                    message: message, // Pesan yang dikirim
-                    time: new Date().toLocaleTimeString() // Waktu pengiriman
-                };
-
-                // console.log(`Sending message: ${JSON.stringify(payload)}`);
-                ws.send(JSON.stringify(payload)); // Kirim payload setelah koneksi terbuka
+            const payload = {
+                user_id: userId, // ID pengirim
+                target_user_id: targetUserId, // ID penerima
+                username: username, // Nama pengguna pengirim
+                message: message, // Pesan yang dikirim
+                time: new Date().toLocaleTimeString() // Waktu pengiriman
             };
 
-            ws.onerror = (error) => {
-                console.error(`WebSocket Error: ${error}`);
-            };
+            // console.log(`Sending message: ${JSON.stringify(payload)}`);
+            ws.send(JSON.stringify(payload)); // Kirim payload setelah koneksi terbuka
+        };
 
-            ws.onclose = () => {
-                console.log('WebSocket connection closed');
-            };
-        }
+        ws.onerror = (error) => {
+            console.error(`WebSocket Error: ${error}`);
+        };
+
+        ws.onclose = () => {
+            console.log('WebSocket connection closed');
+        };
+    }
 
 </script>
 
@@ -837,9 +893,6 @@ function displayQuestions() {
     @include('client.users.type.match')
     </div>
 </script>
-
-
-
 
 
 
