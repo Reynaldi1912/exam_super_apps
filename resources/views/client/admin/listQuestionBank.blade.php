@@ -100,7 +100,7 @@
 
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-              <button type="button" class="btn btn-primary" onclick="saveQuestionBank()">Save</button>
+              <button type="button" class="btn btn-primary" onclick="onclick="saveQuestionBank()"()">Save</button>
             </div>
           </form>
         </div>
@@ -108,12 +108,11 @@
     </div>
   </div>
 
-  <!-- Edit Question Bank Modal -->
-  <div class="modal fade" id="editQuestionBankModal" tabindex="-1" role="dialog" aria-labelledby="editQuestionBankModalLabel" aria-hidden="true">
+  <div class="modal fade" id="editQuestionBankModal" tabindex="-1" role="dialog" aria-labelledby="addQuestionBankModalLabel" aria-hidden="true">
     <div class="modal-dialog" role="document">
       <div class="modal-content">
         <div class="modal-header">
-          <h5 class="modal-title" id="editQuestionBankModalLabel">Edit Question Bank</h5>
+          <h5 class="modal-title" id="addQuestionBankModalLabel">Edit Question Bank</h5>
           <button type="button" class="close" data-dismiss="modal" aria-label="Close">
             <span aria-hidden="true">&times;</span>
           </button>
@@ -124,21 +123,20 @@
             <input type="hidden" id="editQuestionBankId" name="id">
 
             <div class="form-group">
-              <label for="editBankName">Nama Bank Soal</label>
-              <input type="text" class="form-control" id="editBankName" name="name" required>
+              <label for="bankName">Nama Bank Soal</label>
+              <input type="text" class="form-control" id="editBankName" name="name" placeholder="Enter bank name" required>
             </div>
-         
 
             <!-- Multiple Choice -->
             <div class="form-group">
               <h6>Multiple Choice</h6>
               <div class="row">
                 <div class="col-md-6">
-                  <label for="editMultipleCorrectPoints">Poin Jawaban Benar</label>
+                  <label for="multipleCorrectPoints">Poin Jawaban Benar</label>
                   <input type="number" class="form-control" id="editMultipleCorrectPoints" name="multiple_correct_points" placeholder="Masukkan poin untuk jawaban benar" required>
                 </div>
                 <div class="col-md-6">
-                  <label for="editMultipleWrongPoints">Poin Jawaban Salah</label>
+                  <label for="multipleWrongPoints">Poin Jawaban Salah</label>
                   <input type="number" class="form-control" id="editMultipleWrongPoints" name="multiple_wrong_points" placeholder="Masukkan poin untuk jawaban salah" required>
                 </div>
               </div>
@@ -149,11 +147,11 @@
               <h6>Complex</h6>
               <div class="row">
                 <div class="col-md-6">
-                  <label for="editComplexCorrectPoints">Poin Jawaban Benar</label>
+                  <label for="complexCorrectPoints">Poin Jawaban Benar</label>
                   <input type="number" class="form-control" id="editComplexCorrectPoints" name="complex_correct_points" placeholder="Masukkan poin untuk jawaban benar" required>
                 </div>
                 <div class="col-md-6">
-                  <label for="editComplexWrongPoints">Poin Jawaban Salah</label>
+                  <label for="complexWrongPoints">Poin Jawaban Salah</label>
                   <input type="number" class="form-control" id="editComplexWrongPoints" name="complex_wrong_points" placeholder="Masukkan poin untuk jawaban salah" required>
                 </div>
               </div>
@@ -164,11 +162,11 @@
               <h6>Match</h6>
               <div class="row">
                 <div class="col-md-6">
-                  <label for="editMatchCorrectPoints">Poin Jawaban Benar</label>
+                  <label for="matchCorrectPoints">Poin Jawaban Benar</label>
                   <input type="number" class="form-control" id="editMatchCorrectPoints" name="match_correct_points" placeholder="Masukkan poin untuk jawaban benar" required>
                 </div>
                 <div class="col-md-6">
-                  <label for="editMatchWrongPoints">Poin Jawaban Salah</label>
+                  <label for="matchWrongPoints">Poin Jawaban Salah</label>
                   <input type="number" class="form-control" id="editMatchWrongPoints" name="match_wrong_points" placeholder="Masukkan poin untuk jawaban salah" required>
                 </div>
               </div>
@@ -176,13 +174,15 @@
 
             <div class="modal-footer">
               <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
-              <button type="button" class="btn btn-primary" onclick="updateQuestionBank()">Save Changes</button>
+              <button type="button" class="btn btn-primary" onclick="updateQuestionBank()">Save</button>
             </div>
           </form>
         </div>
       </div>
     </div>
   </div>
+
+  
 
 <script>
   $(document).ready(function () {
@@ -251,7 +251,9 @@
   function saveQuestionBank() {
     // Serialize form data
     let formData = $('#addQuestionBankForm').serialize(); // Mengubah form ke string URL-encoded
-    formData += `&user_id={{Session::get('user_id')}}`;
+    formData += '&user_id={{Session::get('user_id')}}';
+    
+    return false;
 
     // Kirim permintaan AJAX
     $.ajax({
@@ -297,10 +299,14 @@
 
 
 function updateQuestionBank() {
-  const formData = $('#editQuestionBankForm').serialize();
+  let formData = $('#editQuestionBankForm').serialize();
+  formData += '&user_id={{Session::get('user_id')}}';
 
+  // console.log(formData);
+  // return false;
+  
   $.ajax({
-    url: `{{ config('app.url') }}/edit-question-bank`,
+    url: '{{ config('app.url') }}/post-question-bank',
     type: 'POST',
     data: formData,
     success: function (response) {
